@@ -3,6 +3,12 @@
 
 Acceso al [documento](https://frtutneduar-my.sharepoint.com/:b:/g/personal/franciscovicente_doc_frt_utn_edu_ar/IQD-5kaAARqnT5eL7EnPMCPgAX2LFXXX6e3p-u1C43z5rsQ?e=lbbpnz)
 
+## Integrantes del grupo:
+* Avila Joaquin 60441
+* Farias Romano Carlos Augusto 58569
+* Ortega Miguel Ignacio 60838
+* Quiroga Santiago 62581
+
 Instrucciones:
 * Realizar una bifurcación por grupo
 * Crear una rama de larga duración `development`
