@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Dsw2026Tpi.CrossCutting\Dsw2026Tpi.CrossCutting.csproj" />
+  </ItemGroup>
+
 </Project>
