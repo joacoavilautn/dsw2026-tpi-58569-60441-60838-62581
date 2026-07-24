@@ -56,6 +56,19 @@ public class Program
 
             Log.Information("Aplicación iniciada correctamente");
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    await Dsw2026Tpi.Api.Extensions.DataSeeder.SeedRolesAndAdminAsync(services);
+                }
+                catch(Exception ex)
+                {
+                    Log.Fatal(ex, "Ocurrió un error durante el seeding de la base de datos. ");
+                }
+            }
+
             await app.RunAsync();
         }
         catch (HostAbortedException)
