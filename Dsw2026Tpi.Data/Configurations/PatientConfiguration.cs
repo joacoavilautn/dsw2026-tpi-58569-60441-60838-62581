@@ -30,10 +30,6 @@ namespace Dsw2026Tpi.Data.Configurations
 
             builder.HasIndex(p => p.UserId).IsUnique();
             builder.HasIndex(p => p.Dni).IsUnique();
-
-
         }
-
-
     }
 }
