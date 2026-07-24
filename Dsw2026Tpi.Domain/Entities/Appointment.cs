@@ -8,8 +8,11 @@ namespace Dsw2026Tpi.Domain.Entities
     public class Appointment : EntityBase
     {
         public Guid DoctorId { get; init; }
+        public Doctor Doctor { get; init; }
         public Guid AvailabilitySlotId { get; init; }
+        public AvailabilitySlot AvailabilitySlot { get; init; }
         public Guid PatientId { get; init; }
+        public Patient Patient { get; init; }
         public string Reason { get; private set; }
         public AppointmentStatus Status { get; private set; }
         public DateTime? CancelledAt { get; private set; }
