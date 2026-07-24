@@ -21,10 +21,8 @@ namespace Dsw2026Tpi.Api.Extensions
                     await roleManager.CreateAsync(new IdentityRole(roleName));
                 }
             }
-
             var adminEmail = "admin@system.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
-
             if (adminUser == null)
             {
                 var newAdmin = new IdentityUser
@@ -33,21 +31,14 @@ namespace Dsw2026Tpi.Api.Extensions
                     Email = adminEmail,
                     EmailConfirmed = true
                 };
-
+                
                 var createPowerUser = await userManager.CreateAsync(newAdmin, "Admin1234!");
 
                 if (createPowerUser.Succeeded)
                 {
                     await userManager.AddToRoleAsync(newAdmin, "ADMINISTRADOR");
                 }
-
             }
-
         }
-
-
-
-
-
     }
 }
