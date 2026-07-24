@@ -1,15 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Dsw2026Tpi.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
+using System.Dynamic;
 using System.Reflection;
 
 namespace Dsw2026Tpi.Data;
 
 public class Dsw2026TpiDbContext: DbContext
 {
+
+    public DbSet<Patient> Patients { get; set; }
+
     public Dsw2026TpiDbContext(DbContextOptions<Dsw2026TpiDbContext> options):
         base(options)
     {
     }
-
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
