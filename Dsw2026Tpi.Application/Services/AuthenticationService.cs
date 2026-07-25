@@ -76,7 +76,7 @@ public class AuthenticationService : IAuthenticationService
         if (!result.Succeeded) throw new ConflictException(nameof(ErrorCodes.REGISTER_USER_CONFLICT),
             ErrorCodes.REGISTER_USER_CONFLICT)
                 .WithDetail(result.Errors.Select(e => (e.Code, e.Description)));
-       
+
         if (!await _roleManager.RoleExistsAsync(Roles.Administrator))
         {
             await _roleManager.CreateAsync(new IdentityRole(Roles.Administrator));

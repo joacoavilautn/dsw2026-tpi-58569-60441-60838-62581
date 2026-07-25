@@ -26,7 +26,7 @@ public class AvailabilityService : IAvailabilityService
     {
         _logger.LogInformation($"Iniciando procesamiento de disponibilidad para el medico {request.DoctorId}.");
 
-        var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == request.DoctorId && !d.IsActive, cancellationToken);
+        var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == request.DoctorId && !d.Deleted, cancellationToken);
         if (!doctorExists)
         {
             _logger.LogWarning($"Intento de asignar disponibilidad a un médico inexistente: {request.DoctorId}");
