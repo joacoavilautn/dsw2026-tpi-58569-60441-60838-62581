@@ -1,4 +1,4 @@
-﻿namespace Dsw2026Tpi.Domain.Entities;
+namespace Dsw2026Tpi.Domain.Entities;
 
 public class Doctor : EntityBase
 {
@@ -25,5 +25,12 @@ public class Doctor : EntityBase
     public void Delete()
     {
         Deleted = true;
+    }
+
+    public void Update(string name, string licenseNumber, Guid specialityId)
+    {
+        Name = name;
+        LicenseNumber = licenseNumber;
+        SpecialityId = specialityId;
     }
 }

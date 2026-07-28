@@ -86,5 +86,6 @@ public class Program
             await Log.CloseAndFlushAsync();
         }
     }
+
 }
 
