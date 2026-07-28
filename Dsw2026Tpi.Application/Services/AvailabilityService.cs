@@ -43,6 +43,7 @@ public class AvailabilityService : IAvailabilityService
         using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            //Soft delete de los slots para limpiar
             var existingSlots = await _context.AvailabilitySlots
                 .Where(s => s.DoctorId == request.DoctorId
                          && s.SlotDate.Month == currentMonth
