@@ -6,9 +6,8 @@ namespace Dsw2026Tpi.Domain.Entities
 {
     public class Patient : EntityBase
     {
-        public Guid Id { get; init; }
         public Guid UserId { get; private set; }
-        public string Dni { get; private set; }
+        public string Dni { get; private set; } = null!;
         public string? FullName { get; private set; }
         public bool Deleted { get; private set;  }
 
