@@ -6,5 +6,6 @@ public interface IAuthenticationService
 {
     Task<RegisterModel.Response> Register(RegisterModel.Request request);
     Task<LoginAdminModel.Response> LoginAdmin(LoginAdminModel.Request request);
-    Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Response request);
+    Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request);
+
 }
