@@ -51,6 +51,13 @@ public class DoctorService : IDoctorService
 
     public async Task<DoctorModel.Response> Create(DoctorModel.Request request)
     {
+        // Validar que no exista un médico activo registrado con la misma matrícula
+        var existingDoctor = await _persistence.First<Doctor>(d => d.LicenseNumber == request.LicenseNumber && !d.Deleted);
+        if (existingDoctor != null)
+        {
+            throw new ConflictException("DOCTOR_ALREADY_EXISTS", $"Ya existe un médico activo registrado con la matrícula '{request.LicenseNumber}'.");
+        }
+
         var speciality = await _persistence.First<Speciality>(s => s.Id == request.SpecialityId && !s.Deleted);
         if (speciality == null)
         {
@@ -74,6 +81,13 @@ public class DoctorService : IDoctorService
         if (doctor == null)
         {
             throw new EntityNotFoundException($"Médico con ID {id} no encontrado.");
+        }
+
+        // Validar que no exista otro médico activo registrado con la misma matrícula
+        var existingDoctor = await _persistence.First<Doctor>(d => d.LicenseNumber == request.LicenseNumber && d.Id != id && !d.Deleted);
+        if (existingDoctor != null)
+        {
+            throw new ConflictException("DOCTOR_ALREADY_EXISTS", $"Ya existe un médico activo registrado con la matrícula '{request.LicenseNumber}'.");
         }
 
         var speciality = await _persistence.First<Speciality>(s => s.Id == request.SpecialityId && !s.Deleted);
