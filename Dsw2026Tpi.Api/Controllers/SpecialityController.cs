@@ -3,7 +3,6 @@ using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
@@ -23,10 +22,7 @@ public class SpecialityController : AppController
 
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll(
-    [FromQuery] int pageSize = 10,
-    [FromQuery] int pageIndex = 0,
-    [FromQuery][StringLength(100, MinimumLength = 3, ErrorMessage = "El filtro de nombre debe tener entre 3 y 100 caracteres.")] string? name = null)
+    public async Task<IActionResult> GetAll([FromQuery] int pageSize = 10, [FromQuery] int pageIndex = 0, [FromQuery] string? name = null)
     {
         var result = await _service.GetAll(pageSize, pageIndex, name);
         return Ok(result);
