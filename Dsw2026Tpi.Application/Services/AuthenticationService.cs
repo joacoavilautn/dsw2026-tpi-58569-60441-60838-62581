@@ -4,7 +4,9 @@ using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Helpers;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Dsw2026Tpi.CrossCutting.Resources;
+using Dsw2026Tpi.Data;
 using Dsw2026Tpi.Data.Identity;
+using Dsw2026Tpi.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 
@@ -17,18 +19,21 @@ public class AuthenticationService : IAuthenticationService
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly JwtService _jwtService;
     private readonly ILogger<AuthenticationService> _logger;
+    private readonly Dsw2026TpiDbContext _dbContext;
 
     public AuthenticationService(UserManager<ApplicationUser> userManager,
         ISignInService signInManager,
         RoleManager<IdentityRole> roleManager,
         JwtService jwtService,
-        ILogger<AuthenticationService> logger)
+        ILogger<AuthenticationService> logger,
+        Dsw2026TpiDbContext dbContext)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _roleManager = roleManager;
         _jwtService = jwtService;
         _logger = logger;
+        _dbContext = dbContext;
     }
 
     public async Task<LoginAdminModel.Response> LoginAdmin(LoginAdminModel.Request request)
@@ -53,9 +58,37 @@ public class AuthenticationService : IAuthenticationService
         );
     }
 
-    public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Response request)
+    public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request)
     {
-        throw new NotImplementedException();
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = request.Email,
+                Email = request.Email
+            };
+
+            var createResult = await _userManager.CreateAsync(user);
+            if (!createResult.Succeeded)
+            {
+                throw new Exception("No se pudo crear el usuario");
+            }
+
+            await _userManager.AddToRoleAsync(user, "PACIENTE");
+
+            var userIdGuid = Guid.Parse(user.Id);
+            var newPatient = new Patient(userIdGuid, request.Dni.ToString(), null);
+
+            _dbContext.Patients.Add(newPatient);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        var token = _jwtService.GenerateToken(request.Email, "PACIENTE");
+
+        return new LoginPatientModel.Response(token, "PACIENTE");
+
+
     }
 
     public async Task<RegisterModel.Response> Register(RegisterModel.Request request)
