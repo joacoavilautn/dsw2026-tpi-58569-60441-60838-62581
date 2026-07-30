@@ -1,10 +1,13 @@
 using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.CrossCutting.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("specialties")]
+[Route("api/specialties")]
+[Authorize(Policy =Policies.AdminPolicy)]
 public class SpecialityController : AppController
 {
     private readonly ISpecialityService _service;
@@ -14,9 +17,9 @@ public class SpecialityController : AppController
         _service = service;
     }
 
-    /// <summary>
+   
     /// Obtener listado paginado de especialidades activas (filtro opcional por nombre).
-    /// </summary>
+   
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize = 10, [FromQuery] int pageIndex = 0, [FromQuery] string? name = null)
@@ -25,9 +28,9 @@ public class SpecialityController : AppController
         return Ok(result);
     }
 
-    /// <summary>
+    
     /// Obtener los detalles de una especialidad por su ID.
-    /// </summary>
+    
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -37,9 +40,9 @@ public class SpecialityController : AppController
         return Ok(result);
     }
 
-    /// <summary>
+    
     /// Crear una nueva especialidad médica.
-    /// </summary>
+   
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] SpecialityModel.Request request)
@@ -48,9 +51,9 @@ public class SpecialityController : AppController
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
-    /// <summary>
+    
     /// Actualizar el nombre o descripción de una especialidad existente.
-    /// </summary>
+    
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -60,9 +63,9 @@ public class SpecialityController : AppController
         return Ok(result);
     }
 
-    /// <summary>
+    
     /// Eliminar lógicamente una especialidad por su ID (Deleted = true).
-    /// </summary>
+    
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

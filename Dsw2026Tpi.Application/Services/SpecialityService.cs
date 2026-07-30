@@ -40,6 +40,12 @@ public class SpecialityService : ISpecialityService
 
     public async Task<SpecialityModel.Response> Create(SpecialityModel.Request request)
     {
+        var existingSpeciality = await _persistence.First<Speciality>(s => s.Name == request.Name && !s.Deleted);
+        if (existingSpeciality != null)
+        {
+            throw new ConflictException("SPECIALITY_ALREADY_EXISTS", $"Ya existe una especialidad activa registrada con el nombre '{request.Name}'.");
+        }
+
         var speciality = new Speciality(request.Name, request.Description);
         await _persistence.Add(speciality);
 
@@ -48,6 +54,12 @@ public class SpecialityService : ISpecialityService
 
     public async Task<SpecialityModel.Response> Update(Guid id, SpecialityModel.Request request)
     {
+        var existingSpeciality = await _persistence.First<Speciality>(s => s.Name == request.Name && !s.Deleted);
+        if (existingSpeciality != null)
+        {
+            throw new ConflictException("SPECIALITY_ALREADY_EXISTS", $"Ya existe una especialidad activa registrada con el nombre '{request.Name}'.");
+        }
+
         var speciality = await _persistence.First<Speciality>(s => s.Id == id && !s.Deleted);
         if (speciality == null)
         {
