@@ -1,10 +1,13 @@
 using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
+using Dsw2026Tpi.CrossCutting.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
-[Route("specialties")]
+[Route("api/specialties")]
+[Authorize(Policy =Policies.AdminPolicy)]
 public class SpecialityController : AppController
 {
     private readonly ISpecialityService _service;
