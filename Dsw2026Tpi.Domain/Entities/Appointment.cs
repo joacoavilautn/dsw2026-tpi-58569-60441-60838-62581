@@ -18,8 +18,7 @@ namespace Dsw2026Tpi.Domain.Entities
         public DateTime? CancelledAt { get; private set; }
         public DateTime? AttendedAt { get; private set; }
 
-        public byte[] RowVersion { get; private set; }
-
+        public Appointment() { }
         public Appointment(Guid doctorId, Guid availabilitySlotId, Guid patientId, string reason)
         {
             DoctorId = doctorId;

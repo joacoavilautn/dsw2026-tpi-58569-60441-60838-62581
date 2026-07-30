@@ -11,8 +11,7 @@ namespace Dsw2026Tpi.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Appointment> builder)
         {
-            builder.Property(x => x.Reason).IsRequired().HasMaxLength(200);
-            builder.Property(x => x.RowVersion).IsRowVersion();
+            builder.Property(x => x.Reason).IsRequired().HasMaxLength(200);           
         }
     }
 }
