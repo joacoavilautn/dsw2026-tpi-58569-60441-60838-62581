@@ -17,6 +17,12 @@ public class DoctorService : IDoctorService
 
     public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
     {
+        // Validar filtro de nombre si es proporcionado
+        if (!string.IsNullOrWhiteSpace(name) && (name.Trim().Length < 3 || name.Trim().Length > 100))
+        {
+            throw new ValidationException("El filtro por nombre debe tener entre 3 y 100 caracteres.", "INVALID_NAME_FILTER");
+        }
+
         var doctors = await _persistence.Paginate<Doctor, string>(
             pageSize, 
             pageIndex, 
@@ -51,6 +57,8 @@ public class DoctorService : IDoctorService
 
     public async Task<DoctorModel.Response> Create(DoctorModel.Request request)
     {
+        ValidateRequest(request);
+
         // Validar que no exista un médico activo registrado con la misma matrícula
         var existingDoctor = await _persistence.First<Doctor>(d => d.LicenseNumber == request.LicenseNumber && !d.Deleted);
         if (existingDoctor != null)
@@ -77,6 +85,8 @@ public class DoctorService : IDoctorService
 
     public async Task<DoctorModel.Response> Update(Guid id, DoctorModel.Request request)
     {
+        ValidateRequest(request);
+
         var doctor = await _persistence.First<Doctor>(d => d.Id == id && !d.Deleted);
         if (doctor == null)
         {
@@ -105,6 +115,24 @@ public class DoctorService : IDoctorService
             doctor.LicenseNumber, 
             new DoctorModel.SpecialityDto(speciality.Id, speciality.Name)
         );
+    }
+
+    private static void ValidateRequest(DoctorModel.Request request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length < 3 || request.Name.Trim().Length > 100)
+        {
+            throw new ValidationException("El nombre del médico es obligatorio y debe tener entre 3 y 100 caracteres.", "INVALID_DOCTOR_NAME");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.LicenseNumber))
+        {
+            throw new ValidationException("La matrícula del médico es obligatoria.", "INVALID_LICENSE_NUMBER");
+        }
+
+        if (request.SpecialityId == Guid.Empty)
+        {
+            throw new ValidationException("La especialidad es obligatoria.", "INVALID_SPECIALITY_ID");
+        }
     }
 
     public async Task Delete(Guid id)
