@@ -27,8 +27,8 @@ namespace Dsw2026Tpi.Api.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> CancelAppointment(Guid id, CancellationToken cancellationToken)
         {
-            var result = await _appointmentService.CancelAppointmentAsync(id, cancellationToken);
-            return Ok(result);
+            await _appointmentService.CancelAppointmentAsync(id, cancellationToken);
+            return NoContent();
         }
     }
 }
