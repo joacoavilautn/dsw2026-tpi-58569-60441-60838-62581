@@ -31,6 +31,11 @@ public class DoctorService : IDoctorService
             nameof(Doctor.Speciality)
         );
 
+        if (!string.IsNullOrWhiteSpace(name) && !doctors.Data.Any())
+        {
+            throw new EntityNotFoundException($"Médico con el nombre '{name}'");
+        }
+
         return doctors.Map(d => new DoctorModel.Response(
             d.Id, 
             d.Name, 

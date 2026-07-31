@@ -11,12 +11,11 @@ namespace Dsw2026Tpi.Api.Controllers;
 
 public class DoctorController : AppController
 {
-    private readonly IDoctorService _service;
 
-    public DoctorController(IDoctorService service)
-    {
-        _service = service;
-    }
+
+    private readonly IDoctorService _service;
+    private readonly IAvailabilityService _availabilityService;
+
 
 
     /// Obtener listado paginado de médicos activos con su especialidad (filtro opcional por nombre).
@@ -76,4 +75,23 @@ public class DoctorController : AppController
         await _service.Delete(id);
         return NoContent();
     }
+    
+
+    public DoctorController(IDoctorService service, IAvailabilityService availabilityService)
+    {
+        _service = service;
+        _availabilityService = availabilityService;
+    }
+
+    /// Obtener la disponibilidad horaria mensual de un médico por su ID.
+    [HttpGet("{id:guid}/availabilities")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAvailabilities(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _availabilityService.GetDoctorAvailabilitiesAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+
 }

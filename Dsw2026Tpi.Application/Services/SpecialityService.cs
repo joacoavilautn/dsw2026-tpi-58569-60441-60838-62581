@@ -30,6 +30,11 @@ public class SpecialityService : ISpecialityService
             s => s.Name
         );
 
+        if (!string.IsNullOrWhiteSpace(name) && !result.Data.Any())
+        {
+            throw new EntityNotFoundException($"Especialidad con el nombre '{name}'");
+        }
+
         return result.Map(s => new SpecialityModel.Response(s.Id, s.Name, s.Description));
     }
 

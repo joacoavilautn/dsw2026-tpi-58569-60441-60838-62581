@@ -1,4 +1,4 @@
-﻿using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.Data;
@@ -57,7 +57,7 @@ public class AvailabilityService : IAvailabilityService
             }
 
             //Generar las reglas y los slots de 30 minutos día a día
-            for (int day = now.Day; day <= daysInMonth; day++)
+            for (int day = 1; day <= daysInMonth; day++)
             {
                 var currentDate = new DateTime(currentYear, currentMonth, day);
                 var dayOfWeek = currentDate.DayOfWeek;
@@ -146,6 +146,55 @@ public class AvailabilityService : IAvailabilityService
             "DOMINGO" or "SUNDAY" or "0" => DayOfWeek.Sunday,
             _ => throw new ValidationException($"Día no reconocido: {day}", "INVALID_DAY_NAME")
         };
+
+
     }
+    public async Task<List<AvailabilityModel.DayAvailability>> GetDoctorAvailabilitiesAsync(Guid doctorId, CancellationToken cancellationToken = default)
+    {
+        // 1. Validar que el médico exista y no esté eliminado
+        var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == doctorId && !d.Deleted, cancellationToken);
+        if (!doctorExists)
+        {
+            throw new EntityNotFoundException($"Médico con ID {doctorId} no encontrado.");
+        }
+
+        // 2. Obtener las reglas de disponibilidad del médico para el mes y año actual
+        var now = DateTime.Now;
+        var rules = await _context.AvailabilityRules
+            .Where(r => r.DoctorId == doctorId
+                     && r.Year == now.Year
+                     && r.Month == now.Month
+                     && !r.Deleted)
+            .ToListAsync(cancellationToken);
+
+        // 3. Si no tiene disponibilidad configurada, retorna vacíos []
+        if (!rules.Any())
+        {
+            return new List<AvailabilityModel.DayAvailability>();
+        }
+
+        // 4. Mapear las reglas a los DTOs de respuesta (Día en español y formato HH:mm)
+        return rules
+            .DistinctBy(r => r.DayOfWeek)
+            .Select(r => new AvailabilityModel.DayAvailability(
+                GetSpanishDayName(r.DayOfWeek),
+                $"{r.StartTime.Hours:D2}:{r.StartTime.Minutes:D2}",
+                $"{r.EndTime.Hours:D2}:{r.EndTime.Minutes:D2}"
+            )).ToList();
+    }
+
+    // Método auxiliar privado para traducir el día de la semana
+    private static string GetSpanishDayName(DayOfWeek dayOfWeek) => dayOfWeek switch
+    {
+        DayOfWeek.Monday => "LUNES",
+        DayOfWeek.Tuesday => "MARTES",
+        DayOfWeek.Wednesday => "MIÉRCOLES",
+        DayOfWeek.Thursday => "JUEVES",
+        DayOfWeek.Friday => "VIERNES",
+        DayOfWeek.Saturday => "SÁBADO",
+        DayOfWeek.Sunday => "DOMINGO",
+        _ => dayOfWeek.ToString().ToUpper()
+    };
+
 }
 
