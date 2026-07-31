@@ -57,7 +57,7 @@ public class AvailabilityService : IAvailabilityService
             }
 
             //Generar las reglas y los slots de 30 minutos día a día
-            for (int day = 1; day <= daysInMonth; day++)
+            for (int day = now.Day; day <= daysInMonth; day++)
             {
                 var currentDate = new DateTime(currentYear, currentMonth, day);
                 var dayOfWeek = currentDate.DayOfWeek;
