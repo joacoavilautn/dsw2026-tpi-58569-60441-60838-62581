@@ -17,9 +17,9 @@ public class SpecialityController : AppController
         _service = service;
     }
 
-   
+
     /// Obtener listado paginado de especialidades activas (filtro opcional por nombre).
-   
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize = 10, [FromQuery] int pageIndex = 0, [FromQuery] string? name = null)
@@ -28,9 +28,10 @@ public class SpecialityController : AppController
         return Ok(result);
     }
 
-    
+
+
     /// Obtener los detalles de una especialidad por su ID.
-    
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

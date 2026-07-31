@@ -17,12 +17,23 @@ public class SpecialityService : ISpecialityService
 
     public async Task<Pagination<SpecialityModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
     {
+        // Validar filtro de nombre si es proporcionado
+        if (!string.IsNullOrWhiteSpace(name) && (name.Trim().Length < 3 || name.Trim().Length > 100))
+        {
+            throw new ValidationException("El filtro por nombre debe tener entre 3 y 100 caracteres.", "INVALID_NAME_FILTER");
+        }
+
         var result = await _persistence.Paginate<Speciality, string>(
             pageSize, 
             pageIndex, 
             s => !s.Deleted && (string.IsNullOrWhiteSpace(name) || s.Name.Contains(name)), 
             s => s.Name
         );
+
+        if (!string.IsNullOrWhiteSpace(name) && !result.Data.Any())
+        {
+            throw new EntityNotFoundException($"Especialidad con el nombre '{name}'");
+        }
 
         return result.Map(s => new SpecialityModel.Response(s.Id, s.Name, s.Description));
     }
@@ -40,6 +51,8 @@ public class SpecialityService : ISpecialityService
 
     public async Task<SpecialityModel.Response> Create(SpecialityModel.Request request)
     {
+        ValidateRequest(request);
+
         var existingSpeciality = await _persistence.First<Speciality>(s => s.Name == request.Name && !s.Deleted);
         if (existingSpeciality != null)
         {
@@ -54,6 +67,8 @@ public class SpecialityService : ISpecialityService
 
     public async Task<SpecialityModel.Response> Update(Guid id, SpecialityModel.Request request)
     {
+        ValidateRequest(request);
+
         var existingSpeciality = await _persistence.First<Speciality>(s => s.Name == request.Name && !s.Deleted);
         if (existingSpeciality != null)
         {
@@ -70,6 +85,19 @@ public class SpecialityService : ISpecialityService
         await _persistence.Update(speciality);
 
         return new SpecialityModel.Response(speciality.Id, speciality.Name, speciality.Description);
+    }
+
+    private static void ValidateRequest(SpecialityModel.Request request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Trim().Length < 3 || request.Name.Trim().Length > 100)
+        {
+            throw new ValidationException("El nombre de la especialidad es obligatorio y debe tener entre 3 y 100 caracteres.", "INVALID_SPECIALITY_NAME");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Trim().Length < 10 || request.Description.Trim().Length > 100)
+        {
+            throw new ValidationException("La descripción es obligatoria y debe tener entre 10 y 100 caracteres.", "INVALID_SPECIALITY_DESCRIPTION");
+        }
     }
 
     public async Task Delete(Guid id)

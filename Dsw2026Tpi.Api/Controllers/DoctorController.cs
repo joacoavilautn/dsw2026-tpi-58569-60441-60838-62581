@@ -11,16 +11,15 @@ namespace Dsw2026Tpi.Api.Controllers;
 
 public class DoctorController : AppController
 {
+
+
     private readonly IDoctorService _service;
+    private readonly IAvailabilityService _availabilityService;
 
-    public DoctorController(IDoctorService service)
-    {
-        _service = service;
-    }
 
-    
+
     /// Obtener listado paginado de médicos activos con su especialidad (filtro opcional por nombre).
-    
+
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int pageSize = 10, [FromQuery] int pageIndex = 0, [FromQuery] string? name = null)
@@ -29,9 +28,10 @@ public class DoctorController : AppController
         return Ok(result);
     }
 
-    
+
+
     /// Obtener los detalles de un médico por su ID.
-    
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -75,4 +75,23 @@ public class DoctorController : AppController
         await _service.Delete(id);
         return NoContent();
     }
+    
+
+    public DoctorController(IDoctorService service, IAvailabilityService availabilityService)
+    {
+        _service = service;
+        _availabilityService = availabilityService;
+    }
+
+    /// Obtener la disponibilidad horaria mensual de un médico por su ID.
+    [HttpGet("{id:guid}/availabilities")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAvailabilities(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _availabilityService.GetDoctorAvailabilitiesAsync(id, cancellationToken);
+        return Ok(result);
+    }
+
+
 }
