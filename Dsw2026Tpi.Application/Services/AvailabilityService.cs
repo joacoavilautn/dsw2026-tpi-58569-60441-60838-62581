@@ -155,7 +155,7 @@ public class AvailabilityService : IAvailabilityService
         var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == doctorId && !d.Deleted, cancellationToken);
         if (!doctorExists)
         {
-            throw new EntityNotFoundException($"Médico con ID {doctorId} no encontrado.", "DOCTOR_NOT_FOUND");
+            throw new EntityNotFoundException($"Médico con ID {doctorId} no encontrado.");
         }
 
         // 2. Obtener las reglas de disponibilidad del médico para el mes y año actual
