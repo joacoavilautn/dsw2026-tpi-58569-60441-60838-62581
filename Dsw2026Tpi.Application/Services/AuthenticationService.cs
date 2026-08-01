@@ -60,9 +60,21 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request)
     {
+        if(string.IsNullOrWhiteSpace(request.Email) || request.Dni <= 0)
+        {
+            throw new ArgumentException("El email y el DNI son obligatorios. ");
+        }
+
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
+            var dniString = request.Dni.ToString();
+            var dniExists = _dbContext.Patients.Any(p => p.Dni == dniString);
+            if (dniExists)
+            {
+                throw new ConflictException("PATIENT_DNI_EXITS", "El DNI ingresado ya se encuentra registrado con otro correo electrónico.");
+            }
+            
             user = new ApplicationUser
             {
                 UserName = request.Email,
@@ -72,16 +84,29 @@ public class AuthenticationService : IAuthenticationService
             var createResult = await _userManager.CreateAsync(user);
             if (!createResult.Succeeded)
             {
-                throw new Exception("No se pudo crear el usuario");
+               throw new ConflictException(nameof(ErrorCodes.REGISTER_USER_CONFLICT), 
+                "No se pudo crear el usuario paciente.")
+                .WithDetail(createResult.Errors.Select(e => (e.Code, e.Description)));
             }
 
             await _userManager.AddToRoleAsync(user, "PACIENTE");
 
             var userIdGuid = Guid.Parse(user.Id);
-            var newPatient = new Patient(userIdGuid, request.Dni.ToString(), null);
+            var newPatient = new Patient(userIdGuid, dniString, null);
 
             _dbContext.Patients.Add(newPatient);
             await _dbContext.SaveChangesAsync();
+        }
+        else
+        {
+            var userIdGuid = Guid.Parse(user.Id);
+            var patient = _dbContext.Patients.FirstOrDefault(p => p.Id == userIdGuid);
+
+            if (patient == null || patient.Dni != dniString)
+            {
+                _logger.LogError("Intento de login fallido para paciente: {Email}. DNI Incorrecto.", request.Email);
+                throw new AuthenticationException();
+            }
         }
 
         var token = _jwtService.GenerateToken(request.Email, "PACIENTE");
