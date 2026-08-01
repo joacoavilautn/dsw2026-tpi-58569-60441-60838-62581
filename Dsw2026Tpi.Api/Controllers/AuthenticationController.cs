@@ -2,6 +2,7 @@
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
@@ -15,6 +16,7 @@ public class AuthenticationController : AppController
         _authenticationService = authenticationService;
     }
 
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpPost("admin/register")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -23,7 +25,7 @@ public class AuthenticationController : AppController
         var result = await _authenticationService.Register(request);
         return Ok(result.Email); 
     }
-
+    [AllowAnonymous]
     [HttpPost("admin/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -33,6 +35,7 @@ public class AuthenticationController : AppController
         return Ok(result);
     }
 
+    [AllowAnonymous]
     [HttpPost("patient/login")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

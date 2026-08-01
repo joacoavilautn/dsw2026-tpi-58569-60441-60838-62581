@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dsw2026Tpi.Api.Controllers;
 
 [Route("api/doctors")]
-[Authorize(Policy = Policies.AdminPolicy)]
-
+[Authorize]
 public class DoctorController : AppController
 {
     private readonly IDoctorService _service;
@@ -41,7 +40,7 @@ public class DoctorController : AppController
     }
 
     /// Registrar un nuevo médico asociado a una especialidad existente.
-    
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] DoctorModel.Request request)
@@ -51,7 +50,7 @@ public class DoctorController : AppController
     }
 
     /// Actualizar los datos de un médico existente (nombre, matrícula o especialidad).
-    
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -61,9 +60,10 @@ public class DoctorController : AppController
         return Ok(result);
     }
 
-    
+
     /// Eliminar lógicamente a un médico por su ID (Deleted = true).
-    
+
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -82,6 +82,5 @@ public class DoctorController : AppController
         var result = await _availabilityService.GetDoctorAvailabilitiesAsync(id);
         return Ok(result);
     }
-
 
 }

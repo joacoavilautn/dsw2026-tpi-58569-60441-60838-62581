@@ -3,11 +3,13 @@ using Dsw2026Tpi.Application.Dtos;
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Services;
 using System.Security.Cryptography.Pkcs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Dsw2026Tpi.Api.Controllers
 {
     [ApiController]
     [Route("api/appointments")]
+    [Authorize]
     public class AppointmentsController : ControllerBase
     {
         private readonly IAppointmentService _appointmentService;
@@ -17,6 +19,7 @@ namespace Dsw2026Tpi.Api.Controllers
             _appointmentService = appointmentService;
         }
 
+        [Authorize(Roles = "PACIENTE")]
         [HttpPost]
         public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request)
         {
@@ -24,6 +27,7 @@ namespace Dsw2026Tpi.Api.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "PACIENTE")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> CancelAppointment(Guid id)
         {

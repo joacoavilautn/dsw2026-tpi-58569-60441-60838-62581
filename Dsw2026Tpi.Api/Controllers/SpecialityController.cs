@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dsw2026Tpi.Api.Controllers;
 
 [Route("api/specialties")]
-[Authorize(Policy =Policies.AdminPolicy)]
+[Authorize]
 public class SpecialityController : AppController
 {
     private readonly ISpecialityService _service;
@@ -41,9 +41,9 @@ public class SpecialityController : AppController
         return Ok(result);
     }
 
-    
+
     /// Crear una nueva especialidad médica.
-   
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] SpecialityModel.Request request)
@@ -52,9 +52,9 @@ public class SpecialityController : AppController
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
-    
+
     /// Actualizar el nombre o descripción de una especialidad existente.
-    
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -64,9 +64,10 @@ public class SpecialityController : AppController
         return Ok(result);
     }
 
-    
+
     /// Eliminar lógicamente una especialidad por su ID (Deleted = true).
-    
+
+    [Authorize(Roles = "ADMINISTRADOR")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
