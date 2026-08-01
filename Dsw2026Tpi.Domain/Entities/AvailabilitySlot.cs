@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Dsw2026Tpi.Domain.Entities;
@@ -13,6 +14,8 @@ public class AvailabilitySlot : EntityBase
     public DateTime SlotDate { get; init; }
     public TimeSpan StartTime { get; init; }
     public TimeSpan EndTime { get; init; }
+
+    [ConcurrencyCheck]
     public SlotStatus Status { get; private set; } = SlotStatus.AVAILABLE;
     public bool Deleted { get; private set; } = false;
 
