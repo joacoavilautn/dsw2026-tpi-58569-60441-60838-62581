@@ -1,5 +1,6 @@
-﻿using Dsw2026Tpi.Application.Interfaces;
+﻿using Azure.Core;
 using Dsw2026Tpi.Application.Dtos;
+using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.CrossCutting.Models;
 using Dsw2026Tpi.Data;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Azure.Core;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Dsw2026Tpi.Application.Services
 {
@@ -148,6 +149,86 @@ namespace Dsw2026Tpi.Application.Services
                     a.CreatedAt
                 )).ToListAsync();
              */
+        }
+        // RF09 - Busqueda Avanzada de turnos con filtros dinamicos y paginacion.
+        public async Task<AppointmentModel.PagedResponse<AppointmentModel.Response>> SearchAppointmentsAsync(AppointmentModel.SearchRequest search)
+        {
+            _logger.LogInformation("Ejecutando busqueda avanzada de turnos con filtros.");
+
+            var consulta = _context.Appointments
+                .Include(a => a.Doctor)
+                .Include(a => a.AvailabilitySlot)
+                .AsQueryable();
+
+            if (search.DoctorId.HasValue)
+            {
+                consulta = consulta.Where(a => a.DoctorId == search.DoctorId.Value);
+            }
+            if (search.SpecialityId.HasValue)
+            {
+                consulta = consulta.Where(a => a.Doctor.SpecialityId == search.SpecialityId.Value);
+            }
+
+            if (search.DateFrom.HasValue)
+            {
+                consulta = consulta.Where(a => a.AvailabilitySlot.SlotDate >= search.DateFrom.Value.Date);
+            }
+
+            if (search.DateTo.HasValue)
+            {
+                consulta = consulta.Where(a => a.AvailabilitySlot.SlotDate <= search.DateTo.Value.Date);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search.Status) && Enum.TryParse<AppointmentStatus>(search.Status, true, out var statusEnum))
+            {
+                consulta = consulta.Where(a => a.Status == statusEnum);
+            }
+
+            var totalCount = await consulta.CountAsync();
+
+            var items = await consulta
+                .OrderBy(a => a.AvailabilitySlot.SlotDate)
+                .ThenBy(a => a.AvailabilitySlot.StartTime)
+                .Skip((search.PageNumber - 1) * search.PageSize)
+                .Take(search.PageSize)
+                .Select(a => new AppointmentModel.Response(
+                    a.Id,
+                    a.DoctorId,
+                    a.AvailabilitySlotId,
+                    a.PatientId,
+                    a.Status.ToString(),
+                    a.Reason,
+                    a.CreatedAt
+                    ))
+                .ToListAsync();
+
+            return new AppointmentModel.PagedResponse<AppointmentModel.Response>(
+                items,
+                totalCount,
+                search.PageNumber,
+                search.PageSize
+                );
+        }
+
+        //Obtiene la lista de turnos programados para una fecha especifica
+        public async Task<IEnumerable<AppointmentModel.Response>> GetAppointmentsByDateAsync(DateTime date)
+        {
+            _logger.LogInformation($"Consultando turnos para la fecha: {date.ToShortDateString()}");
+
+            return await _context.Appointments
+                .Include(a => a.AvailabilitySlot)
+                .Where(a => a.AvailabilitySlot.SlotDate.Date == date.Date)
+                .OrderBy(a => a.AvailabilitySlot.StartTime)
+                .Select(a => new AppointmentModel.Response(
+                    a.Id,
+                    a.DoctorId,
+                    a.AvailabilitySlotId,
+                    a.PatientId,
+                    a.Status.ToString(),
+                    a.Reason,
+                    a.CreatedAt
+                    ))
+                .ToListAsync();
         }
     }
 }

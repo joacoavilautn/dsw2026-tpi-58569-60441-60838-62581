@@ -85,5 +85,35 @@ namespace Dsw2026Tpi.Api.Controllers
             var appointments = await _appointmentService.GetActiveAppointmentsByPatientDniAsync(dni);
             return Ok(appointments);
         }
+
+        //RF09 - Busqueda avanzada y auditoria de turnos paginada
+        [HttpGet("search")]
+        [Authorize(Roles = "ADMINISTRADOR")]
+        public async Task<IActionResult> Search([FromQuery] AppointmentModel.SearchRequest search)
+        {
+            if (search.PageNumber < 1)
+                return BadRequest("El numero de pagina (PageNumber) debe ser mayor o igual a 1.");
+
+            if (search.PageSize < 1 || search.PageSize > 50)
+                return BadRequest("El tamaño de pagina (PageSize) debe estar entre 1 y 50.");
+
+            if (search.DateFrom.HasValue && search.DateTo.HasValue && search.DateFrom.Value > search.DateTo.Value)
+                return BadRequest("La fecha de inicio (DateFrom) no puede ser mayor que la fecha de fin (DateTo)");
+
+            var pagedResult = await _appointmentService.SearchAppointmentsAsync(search);
+            return Ok(pagedResult);
+        }
+
+        //Consultar todos los turnos de un dia especifico
+        [HttpGet]
+        [Authorize(Roles = "ADMINISTRADOR")]
+        public async Task<IActionResult> GetByDate([FromQuery] DateTime date)
+        {
+            if (date == default)
+                return BadRequest("El parametro 'date' en la URL es obligatorio y debe tener un formato valido (ej. AAAA-MM-DD)");
+
+            var appointments = await _appointmentService.GetAppointmentsByDateAsync(date);
+            return Ok(appointments);
+        }
     }
 }

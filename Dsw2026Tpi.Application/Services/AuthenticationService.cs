@@ -65,10 +65,10 @@ public class AuthenticationService : IAuthenticationService
             throw new ArgumentException("El email y el DNI son obligatorios. ");
         }
 
+        var dniString = request.Dni.ToString();
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
-            var dniString = request.Dni.ToString();
             var dniExists = _dbContext.Patients.Any(p => p.Dni == dniString);
             if (dniExists)
             {
