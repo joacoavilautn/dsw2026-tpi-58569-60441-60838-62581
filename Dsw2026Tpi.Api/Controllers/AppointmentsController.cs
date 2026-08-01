@@ -23,7 +23,7 @@ namespace Dsw2026Tpi.Api.Controllers
         //Solicitar/Reservar turno medico disponible.
         [HttpPost]
         [Authorize(Roles = "PACIENTE")]
-        public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request, CancellationToken cancellationToken)
+        public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request)
         {
             if (request == null)
             {
@@ -55,21 +55,21 @@ namespace Dsw2026Tpi.Api.Controllers
                 return BadRequest("El motivo de la consulta es obligatorio y debe tener entre 5 y 200 caracteres.");
             }
 
-            var response = await _appointmentService.BookAppointmentAsync(request, cancellationToken);
+            var response = await _appointmentService.BookAppointmentAsync(request);
             return Ok(response);
         }
 
         //Cancelar turno reservado
         [HttpDelete("{id:guid}")]
         [Authorize(Roles = "PACIENTE")]
-        public async Task<IActionResult> CancelAppointment(Guid id, CancellationToken cancellationToken)
+        public async Task<IActionResult> CancelAppointment(Guid id)
         {
             if (id == Guid.Empty)
             {
                 return BadRequest("El identificador del turno (ID) es obligatorio.");
             }
 
-            await _appointmentService.CancelAppointmentAsync(id, cancellationToken);
+            await _appointmentService.CancelAppointmentAsync(id);
             return NoContent();
         }
 
@@ -82,7 +82,7 @@ namespace Dsw2026Tpi.Api.Controllers
 
             if (!Regex.IsMatch(dni, @"^\d{7,10}$")) return BadRequest("El DNI ingresado debe contener entre 7 y 10 dígitos numéricos.");
             
-            var appointments = await _appointmentService.GetActiveAppointmentsByPatientDniAsync(dni, cancellationToken);
+            var appointments = await _appointmentService.GetActiveAppointmentsByPatientDniAsync(dni);
             return Ok(appointments);
         }
     }

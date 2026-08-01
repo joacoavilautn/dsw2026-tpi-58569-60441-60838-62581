@@ -25,17 +25,17 @@ namespace Dsw2026Tpi.Application.Services
         }
 
         // RF07 - Solicitar / Reservar un turno medico disponible
-        public async Task<AppointmentModel.Response> BookAppointmentAsync(AppointmentModel.Request request, CancellationToken cancellationToken = default)
+        public async Task<AppointmentModel.Response> BookAppointmentAsync(AppointmentModel.Request request)
         {
             _logger.LogInformation($"Iniciando reserva de un turno. Medico: {request.DoctorId}, slot: {request.AvailabilityId} y paciente DNI: {request.Patient.Dni}");
 
-            var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == request.DoctorId && !d.Deleted, cancellationToken);
+            var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == request.DoctorId && !d.Deleted);
             if (!doctorExists) throw new EntityNotFoundException("Doctor");
 
-            var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Dni == request.Patient.Dni.ToString() && !p.Deleted, cancellationToken);
+            var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Dni == request.Patient.Dni.ToString() && !p.Deleted);
             if(patient == null) throw new EntityNotFoundException("Patient");
 
-            var slot = await _context.AvailabilitySlots.FirstOrDefaultAsync(s => s.Id == request.AvailabilityId && !s.Deleted, cancellationToken);
+            var slot = await _context.AvailabilitySlots.FirstOrDefaultAsync(s => s.Id == request.AvailabilityId && !s.Deleted);
             if(slot == null) throw new EntityNotFoundException("AvailabilitySlot");
 
             if(slot.Status != SlotStatus.AVAILABLE) throw new ConflictException("SLOT_NOT_AVAILABLE", "El turno ya fue reservado o bloqueado");
@@ -53,7 +53,7 @@ namespace Dsw2026Tpi.Application.Services
             slot.Reserve();
 
             _context.Appointments.Add(appointment);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
             _logger.LogInformation($"Turno {appointment.Id} reservado exitosamente.");
           
 
@@ -91,11 +91,11 @@ namespace Dsw2026Tpi.Application.Services
         }
 
         // RF08 - Cancelar un turno reservado.
-        public async Task CancelAppointmentAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task CancelAppointmentAsync(Guid id)
         {
             _logger.LogInformation($"Cancelando turno {id}");
 
-            var appointment = await _context.Appointments.Include(a => a.AvailabilitySlot).FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+            var appointment = await _context.Appointments.Include(a => a.AvailabilitySlot).FirstOrDefaultAsync(a => a.Id == id);
             if (appointment == null) throw new EntityNotFoundException("Appointment");
 
             appointment.Cancel();      
@@ -104,12 +104,12 @@ namespace Dsw2026Tpi.Application.Services
             {
                 appointment.AvailabilitySlot.Release();
             }
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
             _logger.LogInformation($"Turno {id} cancelado exitosamente y slot liberado.");          
         }
 
         // Retorna la lista de turnos activos (BOOKED) de un paciente por DNI.
-        public async Task<IEnumerable<AppointmentModel.Response>> GetActiveAppointmentsByPatientDniAsync(string dni, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<AppointmentModel.Response>> GetActiveAppointmentsByPatientDniAsync(string dni)
         {
             _logger.LogInformation($"Consultando turnos activos para el paciente con DNI: {dni}");
 
@@ -124,7 +124,7 @@ namespace Dsw2026Tpi.Application.Services
                     a.Status.ToString(),
                     a.Reason,
                     a.CreatedAt
-                    )).ToListAsync(cancellationToken);
+                    )).ToListAsync();
 
             /*
             return await _context.Appointments
@@ -146,7 +146,7 @@ namespace Dsw2026Tpi.Application.Services
                     a.Status.ToString(),
                     a.Reason,
                     a.CreatedAt
-                )).ToListAsync(cancellationToken);
+                )).ToListAsync();
              */
         }
     }
