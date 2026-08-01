@@ -9,6 +9,7 @@ namespace Dsw2026Tpi.Application.Interfaces
     public interface IAppointmentService
     {
         Task<AppointmentModel.Response> BookAppointmentAsync(AppointmentModel.Request request);
-        Task<bool> CancelAppointmentAsync(Guid id);
+        Task CancelAppointmentAsync(Guid id);
+        Task<IEnumerable<AppointmentModel.Response>> GetActiveAppointmentsByPatientDniAsync(string dni);
     }
 }
