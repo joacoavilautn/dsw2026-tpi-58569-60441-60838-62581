@@ -23,20 +23,20 @@ namespace Dsw2026Tpi.Application.Services
             _context = dbContext;
             _logger = logger;
         }
-        public async Task<AppointmentModel.Response> BookAppointmentAsync(AppointmentModel.Request request, CancellationToken cancellationToken = default)
+        public async Task<AppointmentModel.Response> BookAppointmentAsync(AppointmentModel.Request request)
         {
-            _logger.LogInformation($"Iniciando reserva de un turno para el slot {request.AvailabilityId} y paciente DNI {request.Patient.Dni}");
+            _logger.LogInformation($"Iniciando reserva de un turno para el slot {request.AvailabilitySlotId} y paciente DNI {request.Patient.Dni}");
 
-            var patient = await _context.Set<Patient>().FirstOrDefaultAsync(p => p.Dni == request.Patient.Dni.ToString() && !p.Deleted, cancellationToken);
+            var patient = await _context.Set<Patient>().FirstOrDefaultAsync(p => p.Dni == request.Patient.Dni.ToString() && !p.Deleted);
             if(patient == null) throw new EntityNotFoundException("Patient");
 
-            var slot = await _context.Set<AvailabilitySlot>().FirstOrDefaultAsync(s => s.Id == request.AvailabilityId && !s.Deleted, cancellationToken);
+            var slot = await _context.Set<AvailabilitySlot>().FirstOrDefaultAsync(s => s.Id == request.AvailabilitySlotId && !s.Deleted);
             if(slot == null) throw new EntityNotFoundException("AvailabilitySlot");
 
             if(slot.Status != SlotStatus.AVAILABLE) throw new ConflictException("APPOINTMENT_CONFLICT", "El turno ya fue reservado o bloqueado");
 
             var slotFullDateTime = slot.SlotDate.Date.Add(slot.StartTime);
-            if (slotFullDateTime < DateTime.UtcNow) throw new BusinessRuleException("No se pueden reservar turnos en fechas pasadas.", "PAST_DATE_NOT_ALLOWED");
+            if (slotFullDateTime < DateTime.Now) throw new BusinessRuleException("No se pueden reservar turnos en fechas pasadas.", "PAST_DATE_NOT_ALLOWED");
 
             var appointment = new Appointment(request.DoctorId, slot.Id, patient.Id, request.Reason);
             slot.Reserve();
@@ -45,7 +45,7 @@ namespace Dsw2026Tpi.Application.Services
 
             try
             {
-                await _context.SaveChangesAsync(cancellationToken);
+                await _context.SaveChangesAsync();
             }
             catch(DbUpdateConcurrencyException ex)
             {
@@ -61,22 +61,22 @@ namespace Dsw2026Tpi.Application.Services
                 );
         }
 
-        public async Task<bool> CancelAppointmentAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<bool> CancelAppointmentAsync(Guid id)
         {
             _logger.LogInformation($"Cancelando turno {id}");
 
-            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+            var appointment = await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id);
             if (appointment == null) throw new EntityNotFoundException("Appointment");
 
             appointment.Cancel(DateTime.UtcNow);
 
-            var slot = await _context.Set<AvailabilitySlot>().FirstOrDefaultAsync(s => s.Id == appointment.AvailabilitySlotId, cancellationToken);
+            var slot = await _context.Set<AvailabilitySlot>().FirstOrDefaultAsync(s => s.Id == appointment.AvailabilitySlotId);
 
             if(slot != null)
             {
                 slot.Release();
             }
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
 
             return true;
         }

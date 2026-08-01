@@ -8,5 +8,6 @@ public record AvailabilityModel
 {
     public record DayAvailability(string Day, string StartTime, string EndTime);
     public record Request(Guid DoctorId, List<DayAvailability> Days);
-    public record Responde(string Day, string StartTime, string EndTime);
+    public record DayAvailabilityResponse(Guid Id, string Day, string StartTime, string EndTime);
+    public record Response(Guid DoctorId, List<DayAvailabilityResponse> Days);
 }

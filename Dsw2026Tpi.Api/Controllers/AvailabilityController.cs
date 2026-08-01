@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Dsw2026Tpi.Api.Controllers;
 
 [ApiController]
-[Route("availabilities")]
+[Route("api/availabilities")]
 [Authorize(Policy = Policies.AdminPolicy)]
 public class AvailabilityController : AppController
 {
@@ -26,13 +26,13 @@ public class AvailabilityController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> CreateAvailability([FromBody] AvailabilityModel.Request request, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateAvailability([FromBody] AvailabilityModel.Request request)
     {
         _logger.LogInformation($"HTTP POST api/availabilities recibido para el medico {request.DoctorId}");
 
-        await _availabilityService.SaveAvailabilityAsync(request, cancellationToken);
+        var response = await _availabilityService.SaveAvailabilityAsync(request);
 
-        return Ok(new { message = "Disponibilidad configurada y turnos generados exitosamente." });
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 
     //Actualiza y sobreescribe la disponibilidad horaria del mes para un medico
@@ -41,12 +41,12 @@ public class AvailabilityController : AppController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateAvailability([FromBody] AvailabilityModel.Request request, CancellationToken cancellationToken)
+    public async Task<IActionResult> UpdateAvailability([FromBody] AvailabilityModel.Request request)
     {
         _logger.LogInformation($"HTTP PUT api/availabilities recibido para el medico {request.DoctorId}");
 
-        await _availabilityService.SaveAvailabilityAsync(request, cancellationToken);
+        var response = await _availabilityService.SaveAvailabilityAsync(request);
 
-        return Ok(new { message = "Disponibilidad actualizada existosamente." });
+        return Ok(response);
     }
 }
