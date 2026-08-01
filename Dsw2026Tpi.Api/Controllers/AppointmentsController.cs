@@ -18,16 +18,16 @@ namespace Dsw2026Tpi.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request, CancellationToken cancellationToken)
+        public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request)
         {
-            var result = await _appointmentService.BookAppointmentAsync(request, cancellationToken);
+            var result = await _appointmentService.BookAppointmentAsync(request);
             return Ok(result);
         }
 
         [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> CancelAppointment(Guid id, CancellationToken cancellationToken)
+        public async Task<IActionResult> CancelAppointment(Guid id)
         {
-            var result = await _appointmentService.CancelAppointmentAsync(id, cancellationToken);
+            var result = await _appointmentService.CancelAppointmentAsync(id);
             return Ok(result);
         }
     }
