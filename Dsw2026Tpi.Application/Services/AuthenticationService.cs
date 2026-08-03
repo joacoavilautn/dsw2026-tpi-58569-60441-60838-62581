@@ -99,7 +99,6 @@ public class AuthenticationService : IAuthenticationService
         }
         else
         {
-            var dniString = request.Dni.ToString();
             var userIdGuid = Guid.Parse(user.Id);
             var patient = _dbContext.Patients.FirstOrDefault(p => p.Id == userIdGuid);
 

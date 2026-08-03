@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Dsw2026Tpi.Domain.Entities;
@@ -11,7 +11,7 @@ namespace Dsw2026Tpi.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Appointment> builder)
         {
-            builder.ToTable("Appointment");
+            builder.ToTable("Appointments");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Reason).IsRequired().HasMaxLength(200);
             builder.HasOne(x => x.Doctor).WithMany().HasForeignKey(x => x.DoctorId).OnDelete(DeleteBehavior.Restrict);
