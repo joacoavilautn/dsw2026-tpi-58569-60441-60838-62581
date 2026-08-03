@@ -23,6 +23,27 @@ namespace Dsw2026Tpi.Application.Dtos
             string Reason, 
             DateTime CreatedAt
             );
+        public record SearchRequest(
+            Guid? DoctorId,
+            Guid? SpecialityId,
+            DateTime? DateFrom,
+            DateTime? DateTo,
+            string? Status,
+            int PageNumber = 1,
+            int PageSize = 10
+            );
+        public record PagedResponse<T>(
+            IEnumerable<T> Items,
+            int TotalCount,
+            int PageNumber,
+            int PageSize
+            )
+        {
+            public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+            public bool HasNextPage => PageNumber < TotalPages;
+            public bool HasPreviousPage => PageNumber > 1;
+        }
+
 
         /*
         public record Response(

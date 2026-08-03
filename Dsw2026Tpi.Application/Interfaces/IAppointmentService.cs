@@ -11,5 +11,7 @@ namespace Dsw2026Tpi.Application.Interfaces
         Task<AppointmentModel.Response> BookAppointmentAsync(AppointmentModel.Request request);
         Task CancelAppointmentAsync(Guid id);
         Task<IEnumerable<AppointmentModel.Response>> GetActiveAppointmentsByPatientDniAsync(string dni);
+        Task<AppointmentModel.PagedResponse<AppointmentModel.Response>> SearchAppointmentsAsync(AppointmentModel.SearchRequest search);
+        Task<IEnumerable<AppointmentModel.Response>> GetAppointmentsByDateAsync(DateTime date);
     }
 }
