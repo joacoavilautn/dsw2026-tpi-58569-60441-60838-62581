@@ -127,31 +127,33 @@ public static class SecurityConfigurationExtensions
                     Code = "TOO_MANY_REQUESTS",
                     Message = "Ha superado el limite de solicitudes permitidas. Intente nuevamente más tarde."
                 };
+                await context.HttpContext.Response.WriteAsJsonAsync(errorResponse);
+            };
 
                 var adminConfig = configuration.GetSection("RateLimiting:AdminAuth");
-                options.AddPolicy("AdminAutPolicy", httpContext =>
+                options.AddPolicy("AdminAuthPolicy", httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unkwown_ip",
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = adminConfig.GetValue<int>("PermitLimit"),
-                            Window = TimeSpan.FromMinutes(adminConfig.GetValue<int>("WindowsInMinutes")),
+                            Window = TimeSpan.FromMinutes(adminConfig.GetValue<int>("WindowInMinutes")),
                             QueueLimit = 0
                         }));
 
                 var patientConfig = configuration.GetSection("RateLimiting:PatientAuth");
-                options.AddPolicy("PatientAutPolicy", httpContext =>
+                options.AddPolicy("PatientAuthPolicy", httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unkwown_ip",
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = patientConfig.GetValue<int>("PermitLimit"),
-                            Window = TimeSpan.FromMinutes(patientConfig.GetValue<int>("WindowsInMinutes")),
+                            Window = TimeSpan.FromMinutes(patientConfig.GetValue<int>("WindowInMinutes")),
                             QueueLimit = 0
                         }));
 
-                var bookingConfig = configuration.GetSection("RateLimiting:PatientAuth");
-                options.AddPolicy("PatientAutPolicy", httpContext =>
+                var bookingConfig = configuration.GetSection("RateLimiting:AppointmentBooking");
+                options.AddPolicy("AppointmentBookingPolicy", httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
                         partitionKey: httpContext.User.Identity?.Name
                                    ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
@@ -160,7 +162,7 @@ public static class SecurityConfigurationExtensions
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = bookingConfig.GetValue<int>("PermitLimit"),
-                            Window = TimeSpan.FromMinutes(bookingConfig.GetValue<int>("WindowsInMinutes")),
+                            Window = TimeSpan.FromMinutes(bookingConfig.GetValue<int>("WindowInMinutes")),
                             QueueLimit = 0
                         }));
 
@@ -180,7 +182,7 @@ public static class SecurityConfigurationExtensions
                     });
                 });
 
-            };
+            
         });
 
         return services;
