@@ -10,59 +10,47 @@ namespace Dsw2026Tpi.Application.Dtos
         public record PatientDto( string Dni);
         public record Request(
             Guid DoctorId,
-            Guid AvailabilityId,
+            Guid AvailabilitySlotId,
             PatientDto Patient,
             string Reason
             );
+        public record PatientResponseDto(
+            string Dni,
+            string? FullName
+            );
+        public record SpecialtyResponseDto(
+            Guid SpecialtyId,
+            string Name
+            );
+        public record DoctorResponseDto(
+            Guid DoctorId,
+            string Name,
+            SpecialtyResponseDto Specialty
+            );
         public record Response(
-            Guid Id, 
-            Guid DoctorId, 
-            Guid AvailabilityId, 
-            Guid PatientId, 
-            string Status, 
+            Guid AppointmentsId,
+            string AppointmentsStatus,
+            DoctorResponseDto Doctor,       
+            PatientResponseDto Patient, 
             string Reason, 
             DateTime CreatedAt
             );
         public record SearchRequest(
             Guid? DoctorId,
             Guid? SpecialityId,
+            string? Dni,
+            DateTime? Date,
             DateTime? DateFrom,
             DateTime? DateTo,
             string? Status,
-            int PageNumber = 1,
+            int PageNumber = 0,
             int PageSize = 10
             );
         public record PagedResponse<T>(
-            IEnumerable<T> Items,
-            int TotalCount,
-            int PageNumber,
+            IEnumerable<T> Data,
+            int Total,
+            int PageIndex,
             int PageSize
-            )
-        {
-            public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-            public bool HasNextPage => PageNumber < TotalPages;
-            public bool HasPreviousPage => PageNumber > 1;
-        }
-
-
-        /*
-        public record Response(
-            Guid Id,
-            string DoctorFullName,
-            string SpecialityName,
-            AvailabilityTimeDto AvailableTime,
-            string PatientDni,
-            string Status,
-            string Reason,
-            DateTime CreatedAt
-        );
-
-        public record AvailabilityTimeDto(
-            DateTime Date,
-            TimeSpan StartTime,
-            TimeSpan EndTime
-        );
-         */
-
+            );       
     }
 }
