@@ -3,14 +3,12 @@ using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace Dsw2026Tpi.Application.Services;
 
 public class SpecialityService : ISpecialityService
 {
     private readonly IPersistence _persistence;
-    private readonly ILogger<SpecialityService> _logger;
 
     public SpecialityService(IPersistence persistence)
     {
