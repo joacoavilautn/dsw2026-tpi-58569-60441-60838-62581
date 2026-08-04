@@ -3,6 +3,7 @@ using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Cryptography.Pkcs;
 using System.Text.RegularExpressions;
 
@@ -22,6 +23,8 @@ namespace Dsw2026Tpi.Api.Controllers
 
         //Solicitar/Reservar turno medico disponible.
         [HttpPost]
+        [EnableRateLimiting("AppointmentBookingPolicy")]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         [Authorize(Roles = "PACIENTE")]
         public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request)
         {
