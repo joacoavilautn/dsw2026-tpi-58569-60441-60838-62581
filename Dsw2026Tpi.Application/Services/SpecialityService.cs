@@ -62,6 +62,7 @@ public class SpecialityService : ISpecialityService
         var speciality = new Speciality(request.Name, request.Description);
         await _persistence.Add(speciality);
 
+
         return new SpecialityModel.Response(speciality.Id, speciality.Name, speciality.Description);
     }
 
@@ -83,6 +84,7 @@ public class SpecialityService : ISpecialityService
 
         speciality.Update(request.Name, request.Description);
         await _persistence.Update(speciality);
+
 
         return new SpecialityModel.Response(speciality.Id, speciality.Name, speciality.Description);
     }
@@ -110,5 +112,6 @@ public class SpecialityService : ISpecialityService
 
         speciality.Delete();
         await _persistence.Update(speciality);
+
     }
 }

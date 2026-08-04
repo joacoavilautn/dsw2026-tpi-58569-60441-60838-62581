@@ -189,7 +189,7 @@ public class AvailabilityService : IAvailabilityService
 
 
     }
-    public async Task<List<AvailabilityModel.DayAvailability>> GetDoctorAvailabilitiesAsync(Guid doctorId)
+    public async Task<List<AvailabilityModel.DayAvailabilityResponse>> GetDoctorAvailabilitiesAsync(Guid doctorId)
     {
         // 1. Validar que el médico exista y no esté eliminado
         var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == doctorId && !d.Deleted);
@@ -210,13 +210,14 @@ public class AvailabilityService : IAvailabilityService
         // 3. Si no tiene disponibilidad configurada, retorna vacíos []
         if (!rules.Any())
         {
-            return new List<AvailabilityModel.DayAvailability>();
+            return new List<AvailabilityModel.DayAvailabilityResponse>();
         }
 
-        // 4. Mapear las reglas a los DTOs de respuesta (Día en español y formato HH:mm)
+        // 4. Mapear las reglas a los DTOs de respuesta (Id, Día en español y formato HH:mm)
         return rules
             .DistinctBy(r => r.DayOfWeek)
-            .Select(r => new AvailabilityModel.DayAvailability(
+            .Select(r => new AvailabilityModel.DayAvailabilityResponse(
+                r.Id,
                 GetSpanishDayName(r.DayOfWeek),
                 $"{r.StartTime.Hours:D2}:{r.StartTime.Minutes:D2}",
                 $"{r.EndTime.Hours:D2}:{r.EndTime.Minutes:D2}"

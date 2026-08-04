@@ -52,10 +52,12 @@ public class AuthenticationService : IAuthenticationService
 
         var token  = _jwtService.GenerateToken(user.UserName!, role);
 
+        _logger.LogInformation("Login de administrador exitoso para el correo: {Email}", request.Email);
         return new LoginAdminModel.Response(
             token,
             role
         );
+
     }
 
     public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request)
@@ -95,6 +97,7 @@ public class AuthenticationService : IAuthenticationService
             var newPatient = new Patient(userIdGuid, dniString, null);
 
             _dbContext.Patients.Add(newPatient);
+            _logger.LogInformation("Auto-registro de nuevo paciente exitoso para el correo: {Email} con DNI: {Dni}", request.Email, dniString);
             await _dbContext.SaveChangesAsync();
         }
         else
@@ -111,9 +114,8 @@ public class AuthenticationService : IAuthenticationService
 
         var token = _jwtService.GenerateToken(request.Email, "PACIENTE");
 
+        _logger.LogInformation("Login de paciente exitoso para el correo: {Email}", request.Email);
         return new LoginPatientModel.Response(token, "PACIENTE");
-
-
     }
 
     public async Task<RegisterModel.Response> Register(RegisterModel.Request request)
