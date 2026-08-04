@@ -3,19 +3,16 @@ using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.CrossCutting.Exceptions;
 using Dsw2026Tpi.Domain.Entities;
 using Dsw2026Tpi.Domain.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace Dsw2026Tpi.Application.Services;
 
 public class DoctorService : IDoctorService
 {
     private readonly IPersistence _persistence;
-    private readonly ILogger<DoctorService> _logger;
 
-    public DoctorService(IPersistence persistence, ILogger<DoctorService> logger)
+    public DoctorService(IPersistence persistence)
     {
         _persistence = persistence;
-        _logger = logger;
     }
 
     public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
@@ -82,7 +79,7 @@ public class DoctorService : IDoctorService
 
         var doctor = new Doctor(request.Name, request.LicenseNumber, request.SpecialityId);
         await _persistence.Add(doctor);
-        _logger.LogInformation("Médico registrado exitosamente con ID: {DoctorId}, Nombre: {DoctorName}", doctor.Id, doctor.Name);
+       
 
         return new DoctorModel.Response(
             doctor.Id, 
@@ -117,7 +114,7 @@ public class DoctorService : IDoctorService
 
         doctor.Update(request.Name, request.LicenseNumber, request.SpecialityId);
         await _persistence.Update(doctor);
-        _logger.LogInformation("Médico con ID: {DoctorId} actualizado exitosamente", doctor.Id);
+        
 
         return new DoctorModel.Response(
             doctor.Id, 
@@ -155,6 +152,6 @@ public class DoctorService : IDoctorService
 
         doctor.Delete();
         await _persistence.Update(doctor);
-        _logger.LogInformation("Médico con ID: {DoctorId} eliminado lógicamente", id);
+       
     }
 }
