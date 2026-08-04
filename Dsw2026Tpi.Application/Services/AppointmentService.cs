@@ -39,10 +39,10 @@ namespace Dsw2026Tpi.Application.Services
             if (request.AvailabilitySlotId == Guid.Empty)
                 throw new ValidationException("El identificador del slot de disponibilidad (AvailabilityId) es obligatorio.", "SLOT_ID_REQUIRED");
 
-            if (request.Patient == null || string.IsNullOrWhiteSpace(request.Patient.Dni))
+            if (request.Patient == null || string.IsNullOrWhiteSpace(request.Patient.Dni.ToString()))
                 throw new ValidationException("La información del paciente y su DNI son obligatorios.", "PATIENT_DNI_REQUIRED");
 
-            if (!Regex.IsMatch(request.Patient.Dni, @"^\d{7,10}$"))
+            if (!Regex.IsMatch(request.Patient.Dni.ToString(), @"^\d{7,10}$"))
                 throw new ValidationException("El DNI del paciente debe contener estrictamente entre 7 y 10 dígitos numéricos.", "INVALID_DNI");
 
             if (string.IsNullOrWhiteSpace(request.Reason) || request.Reason.Length < 5 || request.Reason.Length > 200)
@@ -55,7 +55,7 @@ namespace Dsw2026Tpi.Application.Services
                 .FirstOrDefaultAsync(d => d.Id == request.DoctorId && !d.Deleted);
             if (doctorExists == null) throw new EntityNotFoundException("Doctor");
 
-            var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Dni == request.Patient.Dni && !p.Deleted);
+            var patient = await _context.Patients.FirstOrDefaultAsync(p => p.Dni == request.Patient.Dni.ToString() && !p.Deleted);
             if(patient == null) throw new EntityNotFoundException("Patient");
 
             var slot = await _context.AvailabilitySlots.FirstOrDefaultAsync(s => s.Id == request.AvailabilitySlotId && !s.Deleted);
@@ -237,7 +237,7 @@ namespace Dsw2026Tpi.Application.Services
                 AppointmentsStatus: a.Status.ToString(),
                 Patient: new AppointmentModel.PatientResponseDto(
                     Dni: patient.Dni,
-                    FullName: patient.FullName
+                    FullName: patient?.FullName ?? ""
                 ),
                 Doctor: new AppointmentModel.DoctorResponseDto(
                     DoctorId: doctor.Id,

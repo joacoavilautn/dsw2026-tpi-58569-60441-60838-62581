@@ -71,13 +71,13 @@ public class DoctorService : IDoctorService
             throw new ConflictException("DOCTOR_ALREADY_EXISTS", $"Ya existe un médico activo registrado con la matrícula '{request.LicenseNumber}'.");
         }
 
-        var speciality = await _persistence.First<Speciality>(s => s.Id == request.SpecialityId && !s.Deleted);
+        var speciality = await _persistence.First<Speciality>(s => s.Id == request.SpecialtyId && !s.Deleted);
         if (speciality == null)
         {
-            throw new EntityNotFoundException($"Especialidad con ID {request.SpecialityId} no encontrada.");
+            throw new EntityNotFoundException($"Especialidad con ID {request.SpecialtyId} no encontrada.");
         }
 
-        var doctor = new Doctor(request.Name, request.LicenseNumber, request.SpecialityId);
+        var doctor = new Doctor(request.Name, request.LicenseNumber, request.SpecialtyId);
         await _persistence.Add(doctor);
        
 
@@ -106,13 +106,13 @@ public class DoctorService : IDoctorService
             throw new ConflictException("DOCTOR_ALREADY_EXISTS", $"Ya existe un médico activo registrado con la matrícula '{request.LicenseNumber}'.");
         }
 
-        var speciality = await _persistence.First<Speciality>(s => s.Id == request.SpecialityId && !s.Deleted);
+        var speciality = await _persistence.First<Speciality>(s => s.Id == request.SpecialtyId && !s.Deleted);
         if (speciality == null)
         {
-            throw new EntityNotFoundException($"Especialidad con ID {request.SpecialityId} no encontrada.");
+            throw new EntityNotFoundException($"Especialidad con ID {request.SpecialtyId} no encontrada.");
         }
 
-        doctor.Update(request.Name, request.LicenseNumber, request.SpecialityId);
+        doctor.Update(request.Name, request.LicenseNumber, request.SpecialtyId);
         await _persistence.Update(doctor);
         
 
@@ -136,7 +136,7 @@ public class DoctorService : IDoctorService
             throw new ValidationException("La matrícula del médico es obligatoria.", "INVALID_LICENSE_NUMBER");
         }
 
-        if (request.SpecialityId == Guid.Empty)
+        if (request.SpecialtyId == Guid.Empty)
         {
             throw new ValidationException("La especialidad es obligatoria.", "INVALID_SPECIALITY_ID");
         }

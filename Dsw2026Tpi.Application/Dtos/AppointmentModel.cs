@@ -7,7 +7,7 @@ namespace Dsw2026Tpi.Application.Dtos
 {
     public record AppointmentModel
     {
-        public record PatientDto( string Dni);
+        public record PatientDto(long Dni);
         public record Request(
             Guid DoctorId,
             Guid AvailabilitySlotId,
@@ -43,7 +43,7 @@ namespace Dsw2026Tpi.Application.Dtos
             DateTime? DateFrom,
             DateTime? DateTo,
             string? Status,
-            int PageNumber = 0,
+            int PageNumber = 1,
             int PageSize = 10
             );
         public record PagedResponse<T>(
