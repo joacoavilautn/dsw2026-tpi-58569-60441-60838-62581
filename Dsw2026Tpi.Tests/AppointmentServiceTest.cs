@@ -55,7 +55,7 @@ namespace Dsw2026Tpi.Tests
             var request = new AppointmentModel.Request(
                 doctorId,
                 slot.Id,
-                new AppointmentModel.PatientDto("12345678"),
+                new AppointmentModel.PatientDto(12345678),
                 "Consulta general de rutina"
             );
 
@@ -90,7 +90,7 @@ namespace Dsw2026Tpi.Tests
             var request = new AppointmentModel.Request(
                 nonExistentDoctorId,
                 Guid.NewGuid(),
-                new AppointmentModel.PatientDto("12345678"),
+                new AppointmentModel.PatientDto(12345678),
                 "Consulta medica"
             );
 
@@ -131,7 +131,7 @@ namespace Dsw2026Tpi.Tests
             var request = new AppointmentModel.Request(
                 doctorId,
                 slot.Id,
-                new AppointmentModel.PatientDto("87654321"),
+                new AppointmentModel.PatientDto(87654321),
                 "Consulta de seguimiento"
             );
 
@@ -172,7 +172,7 @@ namespace Dsw2026Tpi.Tests
             var request = new AppointmentModel.Request(
                 doctorId,
                 slot.Id,
-                new AppointmentModel.PatientDto("11223344"),
+                new AppointmentModel.PatientDto(11223344),
                 "Intento de reserva pasada"
             );
 
