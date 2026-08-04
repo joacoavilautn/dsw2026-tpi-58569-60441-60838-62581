@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Identity;
+using Dsw2026Tpi.Data.Identity;
 
 namespace Dsw2026Tpi.Api.Extensions
 {
@@ -10,7 +11,7 @@ namespace Dsw2026Tpi.Api.Extensions
         public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            //var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
             string[] roleNames = { "ADMINISTRADOR", "PACIENTE" };
             foreach (var roleName in roleNames)
