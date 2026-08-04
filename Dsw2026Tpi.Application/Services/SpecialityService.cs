@@ -12,10 +12,9 @@ public class SpecialityService : ISpecialityService
     private readonly IPersistence _persistence;
     private readonly ILogger<SpecialityService> _logger;
 
-    public SpecialityService(IPersistence persistence, ILogger<SpecialityService> logger)
+    public SpecialityService(IPersistence persistence)
     {
         _persistence = persistence;
-        _logger = logger;
     }
 
     public async Task<Pagination<SpecialityModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
@@ -64,7 +63,7 @@ public class SpecialityService : ISpecialityService
 
         var speciality = new Speciality(request.Name, request.Description);
         await _persistence.Add(speciality);
-        _logger.LogInformation("Especialidad registrada exitosamente con ID: {SpecialityId}, Nombre: {SpecialityName}", speciality.Id, speciality.Name);
+
 
         return new SpecialityModel.Response(speciality.Id, speciality.Name, speciality.Description);
     }
@@ -87,7 +86,7 @@ public class SpecialityService : ISpecialityService
 
         speciality.Update(request.Name, request.Description);
         await _persistence.Update(speciality);
-        _logger.LogInformation("Especialidad con ID: {SpecialityId} actualizada exitosamente", speciality.Id);
+
 
         return new SpecialityModel.Response(speciality.Id, speciality.Name, speciality.Description);
     }
@@ -115,6 +114,6 @@ public class SpecialityService : ISpecialityService
 
         speciality.Delete();
         await _persistence.Update(speciality);
-        _logger.LogInformation("Especialidad con ID: {SpecialityId} eliminada lógicamente", id);
+
     }
 }
