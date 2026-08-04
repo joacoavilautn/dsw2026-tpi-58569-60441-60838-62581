@@ -48,7 +48,7 @@ namespace Dsw2026Tpi.Api.Controllers
         public async Task<IActionResult> CancelAppointment(Guid id)
         {
             await _appointmentService.CancelAppointmentAsync(id);
-            return Ok(new { message = "ok"});
+            return Ok("ok");
         }
 
         //Ver turnos activos del paciente (solo aquellos en estado BOOKED)
