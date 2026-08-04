@@ -3,7 +3,9 @@ using Dsw2026Tpi.Data.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Concurrent;
 using System.Text;
+using System.Threading.RateLimiting;
 
 namespace Dsw2026Tpi.Api.Configurations;
 
@@ -103,4 +105,87 @@ public static class SecurityConfigurationExtensions
           .AddDefaultTokenProviders();
         return services;
     }
+
+    public static IServiceCollection AddAppRateLimiting(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddRateLimiter(options =>
+        {
+            options.OnRejected = async (context, _) =>
+            {
+                context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                context.HttpContext.Response.ContentType = "application/json";
+
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                var clientKey = context.HttpContext.User.Identity?.IsAuthenticated == true
+                    ? context.HttpContext.User.Identity.Name
+                    : context.HttpContext.Connection.RemoteIpAddress?.ToString();
+
+                logger.LogWarning($"Rate limit excedido para: {clientKey} en el path: {context.HttpContext.Request.Path}");
+
+                var errorResponse = new
+                {
+                    Code = "TOO_MANY_REQUESTS",
+                    Message = "Ha superado el limite de solicitudes permitidas. Intente nuevamente más tarde."
+                };
+                await context.HttpContext.Response.WriteAsJsonAsync(errorResponse);
+            };
+
+                var adminConfig = configuration.GetSection("RateLimiting:AdminAuth");
+                options.AddPolicy("AdminAuthPolicy", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unkwown_ip",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = adminConfig.GetValue<int>("PermitLimit"),
+                            Window = TimeSpan.FromMinutes(adminConfig.GetValue<int>("WindowInMinutes")),
+                            QueueLimit = 0
+                        }));
+
+                var patientConfig = configuration.GetSection("RateLimiting:PatientAuth");
+                options.AddPolicy("PatientAuthPolicy", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unkwown_ip",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = patientConfig.GetValue<int>("PermitLimit"),
+                            Window = TimeSpan.FromMinutes(patientConfig.GetValue<int>("WindowInMinutes")),
+                            QueueLimit = 0
+                        }));
+
+                var bookingConfig = configuration.GetSection("RateLimiting:AppointmentBooking");
+                options.AddPolicy("AppointmentBookingPolicy", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.User.Identity?.Name
+                                   ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                                   ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                                   ?? "unknown_user",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = bookingConfig.GetValue<int>("PermitLimit"),
+                            Window = TimeSpan.FromMinutes(bookingConfig.GetValue<int>("WindowInMinutes")),
+                            QueueLimit = 0
+                        }));
+
+                var generalConfig = configuration.GetSection("RateLimiting:General");
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+                {
+                    var partitionKey = httpContext.User.Identity?.IsAuthenticated == true
+                        ? httpContext.User.Identity.Name!
+                        : httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                    return RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: partitionKey,
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = generalConfig.GetValue<int>("PermitLimit"),
+                        Window = TimeSpan.FromMinutes(generalConfig.GetValue<int>("WindowInMinutes")),
+                        QueueLimit = 0
+                    });
+                });
+
+            
+        });
+
+        return services;
+    }
+
 }

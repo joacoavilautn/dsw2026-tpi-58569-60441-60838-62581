@@ -4,6 +4,7 @@ using Dsw2026Tpi.Application.Services;
 using Dsw2026Tpi.CrossCutting.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Cryptography.Pkcs;
 using System.Text.RegularExpressions;
 
@@ -24,10 +25,12 @@ namespace Dsw2026Tpi.Api.Controllers
         //Solicitar/Reservar turno medico disponible.
         [HttpPost]
         [Authorize(Policy = Policies.PatientPolicy)]
+        [EnableRateLimiting("AppointmentBookingPolicy")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> BookAppointment([FromBody] AppointmentModel.Request request)
         {        

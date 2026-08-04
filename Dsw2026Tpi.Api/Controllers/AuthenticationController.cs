@@ -2,6 +2,7 @@
 using Dsw2026Tpi.Application.Interfaces;
 using Dsw2026Tpi.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Dsw2026Tpi.Api.Controllers;
 
@@ -25,8 +26,10 @@ public class AuthenticationController : AppController
     }
 
     [HttpPost("admin/login")]
+    [EnableRateLimiting("AdminAuthPolicy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> Login([FromBody] LoginAdminModel.Request request)
     {
         var result = await _authenticationService.LoginAdmin(request);
@@ -34,8 +37,10 @@ public class AuthenticationController : AppController
     }
 
     [HttpPost("patient/login")]
+    [EnableRateLimiting("PatientAuthPolicy")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> LoginPatient([FromBody] LoginPatientModel.Request request)
     {
         var result = await _authenticationService.LoginPatient(request);
