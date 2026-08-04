@@ -68,11 +68,11 @@ public class SpecialityController : AppController
     /// Eliminar lógicamente una especialidad por su ID (Deleted = true).
     
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id)
     {
         await _service.Delete(id);
-        return NoContent();
+        return Ok();
     }
 }

@@ -79,6 +79,7 @@ public class DoctorService : IDoctorService
 
         var doctor = new Doctor(request.Name, request.LicenseNumber, request.SpecialityId);
         await _persistence.Add(doctor);
+       
 
         return new DoctorModel.Response(
             doctor.Id, 
@@ -113,6 +114,7 @@ public class DoctorService : IDoctorService
 
         doctor.Update(request.Name, request.LicenseNumber, request.SpecialityId);
         await _persistence.Update(doctor);
+        
 
         return new DoctorModel.Response(
             doctor.Id, 
@@ -150,5 +152,6 @@ public class DoctorService : IDoctorService
 
         doctor.Delete();
         await _persistence.Update(doctor);
+       
     }
 }
