@@ -44,110 +44,101 @@ public class AvailabilityService : IAvailabilityService
 
         var parsedDays = ParseAndValidateDays(request.Days);
 
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        try
+
+        //Soft delete de las reglas activas del medico
+        var existingRule = await _context.AvailabilityRules
+            .Where(s => s.DoctorId == request.DoctorId
+                    && s.Month == currentMonth
+                    && s.Year == currentYear
+                    && !s.Deleted)
+            .ToListAsync();
+        foreach (var rules in existingRule)
         {
-            //Soft delete de las reglas activas del medico
-            var existingRule = await _context.AvailabilityRules
-                .Where(s => s.DoctorId == request.DoctorId
-                        && s.Month == currentMonth
-                        && s.Year == currentYear
-                        && !s.Deleted)
-                .ToListAsync();
-            foreach (var rules in existingRule)
-            {
-                rules.SoftDelete();
-            }
+            rules.SoftDelete();
+        }
 
-            //Soft delete de los slots para limpiar
-            var existingSlots = await _context.AvailabilitySlots
-                .Where(s => s.DoctorId == request.DoctorId
-                         && s.SlotDate.Month == currentMonth
-                         && s.SlotDate.Year == currentYear
-                         && s.Status == SlotStatus.AVAILABLE
-                         && !s.Deleted)
-                .ToListAsync();
-            foreach (var slot in existingSlots)
-            {
-                slot.SoftDelete();
-            }
+        //Soft delete de los slots para limpiar
+        var existingSlots = await _context.AvailabilitySlots
+            .Where(s => s.DoctorId == request.DoctorId
+                    && s.SlotDate.Month == currentMonth
+                    && s.SlotDate.Year == currentYear
+                    && s.Status == SlotStatus.AVAILABLE
+                    && !s.Deleted)
+            .ToListAsync();
+        foreach (var slot in existingSlots)
+        {
+            slot.SoftDelete();
+        }
 
-            var createdRules = new List<AvailabilityRule>();
-            foreach (var config in parsedDays)
+        var createdRules = new List<AvailabilityRule>();
+        foreach (var config in parsedDays)
+        {
+            var rule1 = new AvailabilityRule
             {
-                var rule1 = new AvailabilityRule
-                {
-                    DoctorId = request.DoctorId,
-                    Year = currentYear,
-                    Month = currentMonth,
-                    DayOfWeek = config.DayOfWeek,
-                    StartTime = config.StartTime,
-                    EndTime = config.EndTime
-                };
+                DoctorId = request.DoctorId,
+                Year = currentYear,
+                Month = currentMonth,
+                DayOfWeek = config.DayOfWeek,
+                StartTime = config.StartTime,
+                EndTime = config.EndTime
+            };
 
-                _context.AvailabilityRules.Add(rule1);
-                createdRules.Add(rule1);
-            }
+            _context.AvailabilityRules.Add(rule1);
+            createdRules.Add(rule1);
+        }
    
-            //Generar las reglas y los slots de 30 minutos día a día
-            for (int day = now.Day; day <= daysInMonth; day++)
+        //Generar las reglas y los slots de 30 minutos día a día
+        for (int day = now.Day; day <= daysInMonth; day++)
+        {
+            var currentDate = new DateTime(currentYear, currentMonth, day);
+            var dayOfWeek = currentDate.DayOfWeek;
+
+            if (holidays.Contains(DateOnly.FromDateTime(currentDate)))
             {
-                var currentDate = new DateTime(currentYear, currentMonth, day);
-                var dayOfWeek = currentDate.DayOfWeek;
+                _logger.LogInformation($"Dia {currentDate} omitido por la generacion de turnos por ser feriado.");
+                continue;
+            }
 
-                if (holidays.Contains(DateOnly.FromDateTime(currentDate)))
+            var matchingRule = createdRules.FirstOrDefault(r => r.DayOfWeek == dayOfWeek);
+
+            //Si el médico atiende este día de la semana
+            if (matchingRule != null)
+            {
+                //Generar bloques de 30 minutos entre StartTime y EndTime
+                var currentInterval = matchingRule.StartTime;
+                var intervalSpan = TimeSpan.FromMinutes(30);
+
+                while (currentInterval + intervalSpan <= matchingRule.EndTime)
                 {
-                    _logger.LogInformation($"Dia {currentDate} omitido por la generacion de turnos por ser feriado.");
-                    continue;
-                }
-
-                var matchingRule = createdRules.FirstOrDefault(r => r.DayOfWeek == dayOfWeek);
-
-                //Si el médico atiende este día de la semana
-                if (matchingRule != null)
-                {
-                    //Generar bloques de 30 minutos entre StartTime y EndTime
-                    var currentInterval = matchingRule.StartTime;
-                    var intervalSpan = TimeSpan.FromMinutes(30);
-
-                    while (currentInterval + intervalSpan <= matchingRule.EndTime)
+                    var slotEndTime = currentInterval + intervalSpan;
+                    var slot = new AvailabilitySlot
                     {
-                        var slotEndTime = currentInterval + intervalSpan;
-                        var slot = new AvailabilitySlot
-                        {
-                            DoctorId = request.DoctorId,
-                            AvailabilityRule = matchingRule,
-                            SlotDate = currentDate.Date,
-                            StartTime = currentInterval,
-                            EndTime = slotEndTime
-                        };
-                        _context.AvailabilitySlots.Add(slot);
-                        currentInterval = slotEndTime; // Avanzar 30 min
-                    }
+                        DoctorId = request.DoctorId,
+                        AvailabilityRule = matchingRule,
+                        SlotDate = currentDate.Date,
+                        StartTime = currentInterval,
+                        EndTime = slotEndTime
+                    };
+                    _context.AvailabilitySlots.Add(slot);
+                    currentInterval = slotEndTime; // Avanzar 30 min
                 }
             }
-            _logger.LogInformation($"Se generaron los slots para el médico {request.DoctorId}. Guardando en BD...");
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            _logger.LogInformation($"Disponibilidad guardada correctamente para el médico {request.DoctorId}.");
-
-            var responseDays = createdRules.Select(r => new AvailabilityModel.DayAvailabilityResponse(
-                r.Id,
-                r.DayOfWeek.ToString(),
-                r.StartTime.ToString(@"hh\:mm"),
-                r.EndTime.ToString(@"hh\:mm")
-            )).ToList();
-
-            return new AvailabilityModel.Response(request.DoctorId, responseDays);
         }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
+        _logger.LogInformation($"Se generaron los slots para el médico {request.DoctorId}. Guardando en BD...");
 
+        await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        _logger.LogInformation($"Disponibilidad guardada correctamente para el médico {request.DoctorId}.");
+
+        var responseDays = createdRules.Select(r => new AvailabilityModel.DayAvailabilityResponse(
+            r.Id,
+            r.DayOfWeek.ToString(),
+            r.StartTime.ToString(@"hh\:mm"),
+            r.EndTime.ToString(@"hh\:mm")
+        )).ToList();
+
+        return new AvailabilityModel.Response(request.DoctorId, responseDays);
     }
 
     private List<(DayOfWeek DayOfWeek, TimeSpan StartTime, TimeSpan EndTime)> ParseAndValidateDays(List<AvailabilityModel.DayAvailability> days)

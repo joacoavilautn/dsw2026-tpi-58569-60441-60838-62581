@@ -16,7 +16,12 @@ public class PersistenceEf: IPersistence
 
     public async Task<T> Add<T>(T entity) where T : EntityBase
     {
+        //var now = DateTime.Now;
+        //entity.CreatedAt = now;
+        //entity.UpdatedAt = now;
+
         await _context.AddAsync(entity);
+
         await _context.SaveChangesAsync();
         return entity;
     }
@@ -51,6 +56,8 @@ public class PersistenceEf: IPersistence
 
     public async Task<T> Update<T>(T entity) where T : EntityBase
     {
+        //entity.UpdatedAt = DateTime.Now;
+
         _context.Update(entity);
         await _context.SaveChangesAsync();
         return entity;
