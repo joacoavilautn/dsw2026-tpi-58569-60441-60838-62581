@@ -127,7 +127,6 @@ public class AvailabilityService : IAvailabilityService
         _logger.LogInformation($"Se generaron los slots para el médico {request.DoctorId}. Guardando en BD...");
 
         await _context.SaveChangesAsync();
-        await transaction.CommitAsync();
 
         _logger.LogInformation($"Disponibilidad guardada correctamente para el médico {request.DoctorId}.");
 

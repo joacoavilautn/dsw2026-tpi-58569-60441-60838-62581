@@ -38,8 +38,9 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<LoginAdminModel.Response> LoginAdmin(LoginAdminModel.Request request)
     {
-        if (!request.Email.IsEmailValid()) throw new AuthenticationException();
-        var user = await _userManager.FindByEmailAsync(request.Email) ?? throw new AuthenticationException();
+        if (!request.Email.IsEmailValid()) throw new ValidationException();
+        if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8) throw new ValidationException("La contraseña tiene que tener 8 caracteres o mas", "INVALID_PASSWORD"); 
+        var user = await _userManager.FindByEmailAsync(request.Email) ?? throw new ValidationException();
         var result = await _signInManager.CheckPassword(user, request.Password);
 
         if (!result)
@@ -48,7 +49,7 @@ public class AuthenticationService : IAuthenticationService
             throw new AuthenticationException();
         }
 
-        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+        var role = (await _userManager.GetRolesAsync(user)).FirstOrDefault().ToUpper();
 
         var token  = _jwtService.GenerateToken(user.UserName!, role);
 
@@ -62,19 +63,21 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<LoginPatientModel.Response> LoginPatient(LoginPatientModel.Request request)
     {
-        if(string.IsNullOrWhiteSpace(request.Email) || request.Dni <= 0)
-        {
-            throw new ArgumentException("El email y el DNI son obligatorios. ");
-        }
 
+        if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.IsEmailValid()) 
+            throw new ValidationException("El email es obligatorio y debe tener un formato valido.", "INVALID_EMAIL");
+        
         var dniString = request.Dni.ToString();
+        if (dniString.Length < 7 || dniString.Length > 10)
+            throw new ValidationException("El DNI debe tener entre 7 y 10 digitos", "INVALID_DNI");
+
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {
             var dniExists = _dbContext.Patients.Any(p => p.Dni == dniString);
             if (dniExists)
             {
-                throw new ConflictException("PATIENT_DNI_EXITS", "El DNI ingresado ya se encuentra registrado con otro correo electrónico.");
+                throw new ValidationException("PATIENT_DNI_EXITS", "El DNI ingresado ya se encuentra registrado con otro correo electrónico.");
             }
             
             user = new ApplicationUser
@@ -86,7 +89,7 @@ public class AuthenticationService : IAuthenticationService
             var createResult = await _userManager.CreateAsync(user);
             if (!createResult.Succeeded)
             {
-               throw new ConflictException(nameof(ErrorCodes.REGISTER_USER_CONFLICT), 
+               throw new ValidationException(nameof(ErrorCodes.REGISTER_USER_CONFLICT), 
                 "No se pudo crear el usuario paciente.")
                 .WithDetail(createResult.Errors.Select(e => (e.Code, e.Description)));
             }
@@ -103,9 +106,16 @@ public class AuthenticationService : IAuthenticationService
         else
         {
             var userIdGuid = Guid.Parse(user.Id);
-            var patient = _dbContext.Patients.FirstOrDefault(p => p.Id == userIdGuid);
+            var patient = _dbContext.Patients.FirstOrDefault(p => p.UserId == userIdGuid);
 
-            if (patient == null || patient.Dni != dniString)
+            if (patient == null)
+            {
+                var newPatient = new Patient(userIdGuid, dniString, null);
+                _dbContext.Patients.Add(newPatient);
+                await _dbContext.SaveChangesAsync();
+                
+            }
+            else if (patient.Dni != dniString)
             {
                 _logger.LogError("Intento de login fallido para paciente: {Email}. DNI Incorrecto.", request.Email);
                 throw new AuthenticationException();
