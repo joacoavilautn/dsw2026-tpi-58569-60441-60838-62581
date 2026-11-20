@@ -33,8 +33,12 @@ namespace Dsw2026Tpi.Application.Dtos
             DoctorResponseDto Doctor,       
             PatientResponseDto Patient, 
             string Reason, 
-            DateTime CreatedAt
+            DateTime CreatedAt,
+            DateTime? SlotDate = null,
+            string? StartTime = null,
+            string? EndTime = null
             );
+        public record CountResponse(int Total);
         public record SearchRequest(
             Guid? DoctorId,
             Guid? SpecialityId,

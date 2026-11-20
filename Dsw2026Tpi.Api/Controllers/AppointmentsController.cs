@@ -75,6 +75,16 @@ namespace Dsw2026Tpi.Api.Controllers
             return Ok(pagedResult);
         }
 
+        //Obtener cantidad de turnos confirmados para el dia de hoy (Tarjeta del Tablero Admin)
+        [HttpGet("today/count")]
+        [Authorize(Policy = Policies.AdminPolicy)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetTodayCount()
+        {
+            var result = await _appointmentService.GetTodayBookedCountAsync();
+            return Ok(result);
+        }
+
         //Consultar todos los turnos de un dia especifico
         [HttpGet]
         [Authorize(Policy = Policies.AdminPolicy)]

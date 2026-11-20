@@ -87,7 +87,7 @@ namespace Dsw2026Tpi.Application.Services
             }
 
 
-            return MapToResponse(appointment, doctorExists, patient);
+            return MapToResponse(appointment, doctorExists, patient, slot);
         }
 
         // RF08 - Cancelar un turno reservado.
@@ -118,13 +118,19 @@ namespace Dsw2026Tpi.Application.Services
         
             _logger.LogInformation($"Consultando turnos activos para el paciente con DNI: {dni}");
 
-            return await _context.Appointments
+            var appointments = await _context.Appointments
                 .Include(a => a.Patient)
+                .Include(a => a.AvailabilitySlot)
                 .Include(a => a.Doctor)
                     .ThenInclude(d => d.Speciality)
                 .Where(a => a.Patient.Dni == dni && a.Status == AppointmentStatus.BOOKED)
-                .Select(a => MapToResponse(a, a.Doctor, a.Patient))
+                .OrderBy(a => a.AvailabilitySlot.SlotDate)
+                .ThenBy(a => a.AvailabilitySlot.StartTime)
                 .ToListAsync();
+
+            return appointments
+                .Select(a => MapToResponse(a, a.Doctor!, a.Patient!, a.AvailabilitySlot))
+                .ToList();
         }
         // RF09 - Busqueda Avanzada de turnos con filtros dinamicos y paginacion.
         public async Task<AppointmentModel.PagedResponse<AppointmentModel.Response>> SearchAppointmentsAsync(AppointmentModel.SearchRequest search)
@@ -158,7 +164,10 @@ namespace Dsw2026Tpi.Application.Services
 
             if (!string.IsNullOrWhiteSpace(search.Dni))
             {
-                consulta = consulta.Where(a => a.Patient.Dni == search.Dni);
+                var term = search.Dni.Trim();
+                consulta = consulta.Where(a =>
+                    a.Patient.Dni.Contains(term) ||
+                    (a.Patient.FullName != null && a.Patient.FullName.Contains(term)));
             }
 
             if (search.Date.HasValue)
@@ -183,13 +192,16 @@ namespace Dsw2026Tpi.Application.Services
 
             var totalCount = await consulta.CountAsync();
 
-            var items = await consulta
+            var appointments = await consulta
                 .OrderBy(a => a.AvailabilitySlot.SlotDate)
                 .ThenBy(a => a.AvailabilitySlot.StartTime)
                 .Skip((search.PageNumber - 1) * search.PageSize)
                 .Take(search.PageSize)
-                .Select(a => MapToResponse(a, a.Doctor, a.Patient))
                 .ToListAsync();
+
+            var items = appointments
+                .Select(a => MapToResponse(a, a.Doctor!, a.Patient!, a.AvailabilitySlot))
+                .ToList();
 
             return new AppointmentModel.PagedResponse<AppointmentModel.Response>(
                 Data: items,
@@ -197,6 +209,16 @@ namespace Dsw2026Tpi.Application.Services
                 PageIndex: search.PageNumber,
                 PageSize: search.PageSize
                 );
+        }
+
+        public async Task<AppointmentModel.CountResponse> GetTodayBookedCountAsync()
+        {
+            var today = DateTime.Today;
+            var total = await _context.Appointments
+                .Include(a => a.AvailabilitySlot)
+                .CountAsync(a => a.Status == AppointmentStatus.BOOKED && a.AvailabilitySlot.SlotDate.Date == today);
+
+            return new AppointmentModel.CountResponse(total);
         }
 
         //Obtiene la lista de turnos programados para una fecha especifica
@@ -216,12 +238,15 @@ namespace Dsw2026Tpi.Application.Services
 
             var totalCount = await query.CountAsync();
 
-            var items = await query
+            var appointments = await query
                 .OrderBy(a => a.AvailabilitySlot.StartTime)
                 .Skip(pageIndex * pageSize)
                 .Take(pageSize)
-                .Select(a => MapToResponse(a, a.Doctor, a.Patient))
                 .ToListAsync();
+
+            var items = appointments
+                .Select(a => MapToResponse(a, a.Doctor!, a.Patient!, a.AvailabilitySlot))
+                .ToList();
             return new AppointmentModel.PagedResponse<AppointmentModel.Response>(
                 Data: items,
                 Total: totalCount,
@@ -230,8 +255,9 @@ namespace Dsw2026Tpi.Application.Services
             );
         }
 
-        private static AppointmentModel.Response MapToResponse(Appointment a, Doctor doctor, Patient patient)
+        private static AppointmentModel.Response MapToResponse(Appointment a, Doctor doctor, Patient patient, AvailabilitySlot? slot = null)
         {
+            var resolvedSlot = slot ?? a.AvailabilitySlot;
             return new AppointmentModel.Response(
                 AppointmentsId: a.Id,
                 AppointmentsStatus: a.Status.ToString(),
@@ -248,7 +274,10 @@ namespace Dsw2026Tpi.Application.Services
                     )
                 ),
                 Reason: a.Reason,
-                CreatedAt: a.CreatedAt
+                CreatedAt: a.CreatedAt,
+                SlotDate: resolvedSlot?.SlotDate,
+                StartTime: resolvedSlot != null ? $"{resolvedSlot.StartTime.Hours:D2}:{resolvedSlot.StartTime.Minutes:D2}" : null,
+                EndTime: resolvedSlot != null ? $"{resolvedSlot.EndTime.Hours:D2}:{resolvedSlot.EndTime.Minutes:D2}" : null
             );
         }
     }

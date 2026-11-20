@@ -10,4 +10,5 @@ public record AvailabilityModel
     public record Request(Guid DoctorId, List<DayAvailability> Days);
     public record DayAvailabilityResponse(Guid Id, string Day, string StartTime, string EndTime);
     public record Response(Guid DoctorId, List<DayAvailabilityResponse> Days);
+    public record SlotResponse(Guid Id, DateTime SlotDate, string Day, string StartTime, string EndTime, string Status);
 }

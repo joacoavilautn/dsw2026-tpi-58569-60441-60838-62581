@@ -214,6 +214,43 @@ public class AvailabilityService : IAvailabilityService
             )).ToList();
     }
 
+    public async Task<List<AvailabilityModel.SlotResponse>> GetDoctorAvailableSlotsAsync(Guid doctorId, DateTime? from = null, DateTime? to = null)
+    {
+        var doctorExists = await _context.Doctors.AnyAsync(d => d.Id == doctorId && !d.Deleted);
+        if (!doctorExists)
+        {
+            throw new EntityNotFoundException($"Médico con ID {doctorId} no encontrado.");
+        }
+
+        var today = DateTime.Today;
+        var minDate = from.HasValue && from.Value.Date > today ? from.Value.Date : today;
+        var query = _context.AvailabilitySlots
+            .Where(s => s.DoctorId == doctorId
+                     && !s.Deleted
+                     && s.Status == SlotStatus.AVAILABLE
+                     && s.SlotDate.Date >= minDate);
+
+        if (to.HasValue)
+        {
+            var maxDate = to.Value.Date;
+            query = query.Where(s => s.SlotDate.Date <= maxDate);
+        }
+
+        var slots = await query
+            .OrderBy(s => s.SlotDate)
+            .ThenBy(s => s.StartTime)
+            .ToListAsync();
+
+        return slots.Select(s => new AvailabilityModel.SlotResponse(
+            s.Id,
+            s.SlotDate,
+            GetSpanishDayName(s.SlotDate.DayOfWeek),
+            $"{s.StartTime.Hours:D2}:{s.StartTime.Minutes:D2}",
+            $"{s.EndTime.Hours:D2}:{s.EndTime.Minutes:D2}",
+            s.Status.ToString()
+        )).ToList();
+    }
+
     // Método auxiliar privado para traducir el día de la semana
     private static string GetSpanishDayName(DayOfWeek dayOfWeek) => dayOfWeek switch
     {
