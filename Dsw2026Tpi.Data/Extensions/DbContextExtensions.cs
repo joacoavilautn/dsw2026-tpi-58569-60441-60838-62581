@@ -9,7 +9,8 @@ public static class DbContextExtensions
     public static void Seedwork<T>(this DbContext context, string dataSource) where T : class
     {
         if (context.Set<T>().Any()) return;
-        var json = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, dataSource));
+        var normalizedPath = dataSource.Replace('\\', Path.DirectorySeparatorChar);
+        var json = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, normalizedPath));
         var entities = JsonSerializer.Deserialize<List<T>>(json, JsonOptions.JsonSerializerOptions);
         if (entities == null || entities.Count == 0) return;
         context.Set<T>().AddRange(entities);
