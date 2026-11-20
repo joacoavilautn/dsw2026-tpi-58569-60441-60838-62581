@@ -48,11 +48,11 @@ public class Program
             }
 
             app.UseCors();
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseAuthentication();
             app.UseRateLimiter();
             app.UseAuthorization();
-            app.UseMiddleware<ExceptionHandlingMiddleware>();
-
+            
             app.MapControllers();
             app.MapHealthChecks("/health-check");
 
