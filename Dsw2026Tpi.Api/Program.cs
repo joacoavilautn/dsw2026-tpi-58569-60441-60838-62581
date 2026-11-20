@@ -47,12 +47,12 @@ public class Program
                 app.UseSwaggerUI();
             }
 
+            app.UseCors();
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
             app.UseAuthentication();
             app.UseRateLimiter();
             app.UseAuthorization();
-            app.UseCors();
-            app.UseMiddleware<ExceptionHandlingMiddleware>();
-
+            
             app.MapControllers();
             app.MapHealthChecks("/health-check");
 
