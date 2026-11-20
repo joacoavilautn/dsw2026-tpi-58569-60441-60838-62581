@@ -9,5 +9,6 @@ public interface IAvailabilityService
 {
     Task<AvailabilityModel.Response> SaveAvailabilityAsync(AvailabilityModel.Request request);
     Task<List<AvailabilityModel.DayAvailabilityResponse>> GetDoctorAvailabilitiesAsync(Guid doctorId);
+    Task<List<AvailabilityModel.SlotResponse>> GetDoctorAvailableSlotsAsync(Guid doctorId, DateTime? from = null, DateTime? to = null);
 }
 

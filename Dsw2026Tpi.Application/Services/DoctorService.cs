@@ -15,7 +15,7 @@ public class DoctorService : IDoctorService
         _persistence = persistence;
     }
 
-    public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null)
+    public async Task<Pagination<DoctorModel.Response>> GetAll(int pageSize, int pageIndex, string? name = null, Guid? specialtyId = null)
     {
         // Validar filtro de nombre si es proporcionado
         if (!string.IsNullOrWhiteSpace(name) && (name.Trim().Length < 3 || name.Trim().Length > 100))
@@ -26,15 +26,12 @@ public class DoctorService : IDoctorService
         var doctors = await _persistence.Paginate<Doctor, string>(
             pageSize, 
             pageIndex, 
-            d => !d.Deleted && (string.IsNullOrWhiteSpace(name) || d.Name.Contains(name)), 
+            d => !d.Deleted
+                 && (string.IsNullOrWhiteSpace(name) || d.Name.Contains(name))
+                 && (!specialtyId.HasValue || d.SpecialityId == specialtyId.Value), 
             x => x.Name, 
             nameof(Doctor.Speciality)
         );
-
-        if (!string.IsNullOrWhiteSpace(name) && !doctors.Data.Any())
-        {
-            throw new EntityNotFoundException($"Médico con el nombre '{name}'");
-        }
 
         return doctors.Map(d => new DoctorModel.Response(
             d.Id, 
@@ -42,6 +39,33 @@ public class DoctorService : IDoctorService
             d.LicenseNumber,
             new DoctorModel.SpecialityDto(d.Speciality?.Id, d.Speciality?.Name)
         ));
+    }
+
+    public async Task<DoctorModel.CountResponse> GetCount()
+    {
+        var active = (await _persistence.GetFiltered<Doctor>(d => !d.Deleted))?.ToList() ?? [];
+        var now = DateTime.UtcNow;
+        var addedThisMonth = active.Count(d => d.CreatedAt.Year == now.Year && d.CreatedAt.Month == now.Month);
+        return new DoctorModel.CountResponse(active.Count, addedThisMonth);
+    }
+
+    public async Task<IEnumerable<DoctorModel.OptionResponse>> GetOptions(Guid? specialtyId = null)
+    {
+        var active = await _persistence.GetFiltered<Doctor>(
+            d => !d.Deleted && (!specialtyId.HasValue || d.SpecialityId == specialtyId.Value),
+            nameof(Doctor.Speciality)
+        );
+
+        return (active ?? [])
+            .OrderBy(d => d.Name)
+            .Select(d => new DoctorModel.OptionResponse(
+                d.Id,
+                d.Name,
+                d.LicenseNumber,
+                d.Speciality?.Id ?? d.SpecialityId,
+                d.Speciality?.Name
+            ))
+            .ToList();
     }
 
     public async Task<DoctorModel.Response> GetById(Guid id)
@@ -78,6 +102,9 @@ public class DoctorService : IDoctorService
         }
 
         var doctor = new Doctor(request.Name, request.LicenseNumber, request.SpecialtyId);
+        var now = DateTime.UtcNow;
+        doctor.CreatedAt = now;
+        doctor.UpdatedAt = now;
         await _persistence.Add(doctor);
        
 

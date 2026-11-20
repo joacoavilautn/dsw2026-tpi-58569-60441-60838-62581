@@ -95,8 +95,9 @@ public static class SecurityConfigurationExtensions
             {
                 RequiredLength = 6,
                 RequireLowercase = true,
-                RequireUppercase = true,
-                RequireDigit = true
+                RequireUppercase = false,
+                RequireDigit = true,
+                RequireNonAlphanumeric = false
             };
 
         }).AddRoles<IdentityRole>()
