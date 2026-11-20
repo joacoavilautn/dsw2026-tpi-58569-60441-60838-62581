@@ -11,7 +11,7 @@ namespace Dsw2026Tpi.Api.Extensions
         public static async Task SeedRolesAndAdminAsync(IServiceProvider serviceProvider)
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            //var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
             string[] roleNames = { "ADMINISTRADOR", "PACIENTE" };
             foreach (var roleName in roleNames)
@@ -22,24 +22,38 @@ namespace Dsw2026Tpi.Api.Extensions
                     await roleManager.CreateAsync(new IdentityRole(roleName));
                 }
             }
-            //var adminEmail = "admin@system.com";
-            //var adminUser = await userManager.FindByEmailAsync(adminEmail);
-            //if (adminUser == null)
-            //{
-            //    var newAdmin = new IdentityUser
-            //    {
-            //        UserName = adminEmail,
-            //        Email = adminEmail,
-            //        EmailConfirmed = true
-            //    };
-                
-            //    var createPowerUser = await userManager.CreateAsync(newAdmin, "Admin1234!");
 
-            //    if (createPowerUser.Succeeded)
-            //    {
-            //        await userManager.AddToRoleAsync(newAdmin, "ADMINISTRADOR");
-            //    }
-            //}
+            var defaultAdmins = new (string Email, string Password)[]
+            {
+                ("admin@medportal.com", "admin123"),
+                ("admin@system.com", "Admin1234!")
+            };
+
+            foreach (var (adminEmail, adminPassword) in defaultAdmins)
+            {
+                var adminUser = await userManager.FindByEmailAsync(adminEmail);
+                if (adminUser == null)
+                {
+                    var newAdmin = new ApplicationUser
+                    {
+                        UserName = adminEmail,
+                        Email = adminEmail,
+                        EmailConfirmed = true,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    var createPowerUser = await userManager.CreateAsync(newAdmin, adminPassword);
+                    if (createPowerUser.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(newAdmin, "ADMINISTRADOR");
+                    }
+                }
+                else if (!await userManager.IsInRoleAsync(adminUser, "ADMINISTRADOR"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "ADMINISTRADOR");
+                }
+            }
         }
     }
 }

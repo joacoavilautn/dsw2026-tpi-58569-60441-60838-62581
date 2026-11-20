@@ -30,12 +30,22 @@ public class SpecialityService : ISpecialityService
             s => s.Name
         );
 
-        if (!string.IsNullOrWhiteSpace(name) && !result.Data.Any())
-        {
-            throw new EntityNotFoundException($"Especialidad con el nombre '{name}'");
-        }
-
         return result.Map(s => new SpecialityModel.Response(s.Id, s.Name, s.Description));
+    }
+
+    public async Task<SpecialityModel.CountResponse> GetCount()
+    {
+        var active = await _persistence.GetFiltered<Speciality>(s => !s.Deleted);
+        return new SpecialityModel.CountResponse(active?.Count() ?? 0);
+    }
+
+    public async Task<IEnumerable<SpecialityModel.OptionResponse>> GetOptions()
+    {
+        var active = await _persistence.GetFiltered<Speciality>(s => !s.Deleted);
+        return (active ?? [])
+            .OrderBy(s => s.Name)
+            .Select(s => new SpecialityModel.OptionResponse(s.Id, s.Name))
+            .ToList();
     }
 
     public async Task<SpecialityModel.Response> GetById(Guid id)
