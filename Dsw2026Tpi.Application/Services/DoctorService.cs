@@ -43,7 +43,7 @@ public class DoctorService : IDoctorService
 
     public async Task<DoctorModel.CountResponse> GetCount()
     {
-        var active = (await _persistence.GetFiltered<Doctor>(d => !d.Deleted))?.ToList() ?? [];
+        var active = (await _persistence.GetFiltered<Doctor>(d => !d.Deleted && !d.Speciality.Deleted))?.ToList() ?? [];
         var now = DateTime.UtcNow;
         var addedThisMonth = active.Count(d => d.CreatedAt.Year == now.Year && d.CreatedAt.Month == now.Month);
         return new DoctorModel.CountResponse(active.Count, addedThisMonth);

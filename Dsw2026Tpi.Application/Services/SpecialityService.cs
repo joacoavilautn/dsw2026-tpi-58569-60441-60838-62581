@@ -120,6 +120,13 @@ public class SpecialityService : ISpecialityService
             throw new EntityNotFoundException($"Especialidad con ID {id} no encontrada.");
         }
 
+        var doctors = await _persistence.GetFiltered<Doctor>(d => d.SpecialityId == id && !d.Deleted) ?? [];
+        foreach (var doctor in doctors)
+        {
+            doctor.Delete();
+            await _persistence.Update(doctor);
+        }
+
         speciality.Delete();
         await _persistence.Update(speciality);
 
